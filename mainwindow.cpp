@@ -7,6 +7,10 @@
 #include <QMessageBox>
 #include <QSettings>
 #include <QTextCodec>
+#include <QFileDialog>
+#include <QDesktopServices>
+
+
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
     ui(new Ui::MainWindow)
@@ -29,13 +33,17 @@ MainWindow::MainWindow(QWidget *parent) :
         m_trayIcon->setContextMenu( menu );
 
         m_trayIcon->show();
+
     stat_win = new table_date();
     QTimer *tmr  = new QTimer();
-    tmr->setInterval(1000);
+    tmr->setInterval(2000);
     connect(tmr, SIGNAL(timeout()), &date_time_obj, SLOT(remind_demon()));
-    tmr->start();
-    connect(this, SIGNAL(sendData(std::vector <date_time>*, std::vector <QString>*)), stat_win, SLOT(recieveData(std::vector <date_time>*, std::vector <QString>*)));
+    connect(&date_time_obj, SIGNAL(stop_timer()), tmr, SLOT(stop()));
+    connect(&date_time_obj, SIGNAL(start_timer(int)), tmr, SLOT(start(int)));
+    connect(&date_time_obj, SIGNAL(show_form()), this, SLOT(show()));
+    connect(this, SIGNAL(sendData(std::vector <date_time>*, std::vector <QString>*, std::vector <QString>*)), stat_win, SLOT(recieveData(std::vector <date_time>*, std::vector <QString>*, std::vector <QString>*)));
 
+    tmr->start();
     //Загрука в реестр
     QSettings settings("HKEY_CURRENT_USER\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Run", QSettings::NativeFormat);
 
@@ -75,11 +83,13 @@ void MainWindow::onShowMessageInTray() {
     m_trayIcon->showMessage( "Message title", "Message text", QSystemTrayIcon::Information );
 }
 
-int My_date_time::qstring_to_date_time(QString line, date_time &new_date_time)
+int My_date_time::qstring_to_date_time(QString line, date_time &new_date_time, QString &file_name)
 {
-    QStringList shortList = line.split(' ');
-    if (shortList.count() != 5)
+    QStringList shortList = line.split("#$#");
+
+    if (shortList.count() < 6)
     {
+        qDebug() << shortList;
         qDebug() << shortList.count() << " fuck in qstring_to_date_time";
         return -1;
     }
@@ -88,6 +98,10 @@ int My_date_time::qstring_to_date_time(QString line, date_time &new_date_time)
     new_date_time.day = shortList[2].toInt();
     new_date_time.hour = shortList[3].toInt();
     new_date_time.minute = shortList[4].toInt();
+    array_file_names.push_back(shortList[5]);
+    file_name = shortList[5];
+    /*for(int i = 5; i < shortList.count();i++)
+        file_name += shortList[i] + " ";*/
     return 0;
 }
 
@@ -96,18 +110,22 @@ int My_date_time::update_arrays()
     count = 0;
     array_date_time.clear();
     array_messages.clear();
+    array_file_names.clear();
 
     QString path_date_time_rem = QDir::currentPath().append("/data/date_time_rem.txt");
     QFile file_date_time_rem(path_date_time_rem);
     if (file_date_time_rem.open(QIODevice::ReadOnly | QIODevice::Text))
     {
         QString line;
+        QString file_name;
         date_time new_date_time;
-        while (!file_date_time_rem.atEnd())
+        QTextStream in(&file_date_time_rem);
+        while (!in.atEnd())
         {
-            line = file_date_time_rem.readLine();
-            qstring_to_date_time(line, new_date_time);
+            line = in.readLine();
+            qstring_to_date_time(line, new_date_time, file_name);
             array_date_time.push_back(new_date_time);
+            //array_file_names.push_back(file_name);
             count++;
         }
         file_date_time_rem.close();
@@ -118,23 +136,6 @@ int My_date_time::update_arrays()
         return -1;
     }
 
-    /*for(int i = 1; i <= count; i++ )
-    {
-        QString path_new_rem = QDir::currentPath().append("/data/rem_").append(QString::number(i)).append(".txt");
-        qDebug() << path_new_rem;
-        QFile file_new_rem(path_new_rem);
-        if (file_new_rem.open(QIODevice::ReadOnly | QIODevice::Text))
-        {
-            QTextStream in(&file_new_rem);
-            array_messages.push_back(in.readAll());
-            file_new_rem.close();
-        }
-        else
-        {
-            qDebug() << "fuck in file_new_rem update_arrays";
-            return -2;
-        }
-    }*/
     QString path_new_rem = QDir::currentPath().append("/data/reminders.txt");
     QFile file_new_rem(path_new_rem);
     if (file_new_rem.open(QIODevice::ReadOnly | QIODevice::Text))
@@ -155,6 +156,42 @@ int My_date_time::update_arrays()
     }
     return 0;
 }
+
+void add_new_remind(QString remind_text)
+{
+    QString path_rem = QDir::currentPath().append("/data/reminders.txt");
+    //qDebug() << path_new_rem;
+    QFile file_rem(path_rem);
+    if (file_rem.open(QIODevice::Append | QIODevice::Text))
+    {
+        QTextStream outstream(&file_rem);
+        outstream << remind_text;
+        outstream << "\n@$@@$@@$@\n";
+        file_rem.close();
+    }
+    else
+    {
+        qDebug() << "fuck in file_rem";
+    }
+}
+
+void add_date_time(date_time &nem_date_time, QString &filename)
+{
+    QString path_date_time_rem = QDir::currentPath().append("/data/date_time_rem.txt");
+    QFile file_date_time_rem(path_date_time_rem);
+    if (file_date_time_rem.open(QIODevice::Append | QIODevice::Text))
+    {
+        QTextStream outstream(&file_date_time_rem);
+        outstream << nem_date_time.year << "#$#" << nem_date_time.month << "#$#" << nem_date_time.day << "#$#";
+        outstream << nem_date_time.hour << "#$#" << nem_date_time.minute << "#$#" << filename << "\n";
+        file_date_time_rem.close();
+    }
+    else
+    {
+        qDebug() << "fuck in file_date_time_rem";
+    }
+}
+
 
 void My_date_time::remind_demon(void)
 {
@@ -179,74 +216,65 @@ void My_date_time::remind_demon(void)
                 this->array_date_time[i].hour == dt.time().hour() &&
                 this->array_date_time[i].minute == dt.time().minute())
         {
-            //QMessageBox::information(this, "Напоминание", "Сработало напоминание!");
-            QMessageBox msgBox;
+            /*QMessageBox msgBox;
             msgBox.setWindowTitle("Напоминание");
             msgBox.setText("Сработало напоминание!");
+            msgBox.exec();*/
+            emit stop_timer();
+
+            QMessageBox msgBox;
+            QString str = "Напоминание!\n";
+            msgBox.setText(str.append(array_messages[i]).append("\n").append("Файл: ").append(array_file_names[i]));
+            QAbstractButton* pButtonClose = msgBox.addButton(tr("Закрыть"), QMessageBox::YesRole);
+            QAbstractButton* pButtonWait = msgBox.addButton(tr("Отложить"), QMessageBox::NoRole);
+            QAbstractButton* pButtonOpen = msgBox.addButton(tr("Файл"), QMessageBox::YesRole);
+
             msgBox.exec();
+
+            if (msgBox.clickedButton()==pButtonClose)
+            {
+                array_date_time.erase(array_date_time.begin()+i);
+                array_messages.erase(array_messages.begin()+i);
+                QFile(QDir::currentPath().append("/data/reminders.txt")).remove();
+                QFile(QDir::currentPath().append("/data/date_time_rem.txt")).remove();
+                for(int i = 0; i < array_date_time.size(); i++)
+                {
+                    add_date_time(array_date_time[i],array_file_names[i]);
+                    add_new_remind(array_messages[i]);
+                }
+                emit show_form();
+            }
+            else if(msgBox.clickedButton()==pButtonWait)
+            {
+                array_date_time[i].minute += 1;
+                if (array_date_time[i].minute >= 60)
+                {
+                    array_date_time[i].minute -= 60;
+                    array_date_time[i].hour++;
+                }
+
+                QFile(QDir::currentPath().append("/data/reminders.txt")).remove();
+                QFile(QDir::currentPath().append("/data/date_time_rem.txt")).remove();
+                for(int i = 0; i < array_date_time.size(); i++)
+                {
+                    add_date_time(array_date_time[i],array_file_names[i]);
+                    add_new_remind(array_messages[i]);
+                }
+                emit show_form();
+            }
+            else
+            {
+                QString str = QDir::currentPath().append("/data/documents/").append(array_file_names[i]);
+                QDesktopServices::openUrl(QUrl::fromLocalFile(str));
+                qDebug() << "мазафака";
+            }
+            emit start_timer(2000);
         }
     }
     //qDebug() << "hello world!";
 }
 
-void add_new_remind(QString file_name, QString remind_text, My_date_time &date_time_obj)
-{
-    /*QString path_new_rem = QDir::currentPath().append("/data/rem_").append(file_name).append(".txt");
-    //qDebug() << path_new_rem;
-    QFile file_new_rem(path_new_rem);
-    if (file_new_rem.open(QIODevice::ReadWrite  | QIODevice::Text))
-    {
-        QTextStream outstream(&file_new_rem);
-        outstream << remind_text;
-        file_new_rem.close();
-    }
-    else
-    {
-        qDebug() << "fuck in file_new_rem";
-    }*/
 
-
-
-
-    QString path_rem = QDir::currentPath().append("/data/reminders.txt");
-    //qDebug() << path_new_rem;
-    QFile file_rem(path_rem);
-    if (file_rem.open(QIODevice::Append | QIODevice::Text))
-    {
-        QTextStream outstream(&file_rem);
-        outstream << remind_text;
-        outstream << "\n@$@@$@@$@\n";
-        file_rem.close();
-    }
-    else
-    {
-        qDebug() << "fuck in file_rem";
-    }
-
-
-
-
-
-    date_time_obj.array_messages.push_back(remind_text);
-}
-
-void add_date_time(date_time nem_date_time, My_date_time &date_time_obj)
-{
-    QString path_date_time_rem = QDir::currentPath().append("/data/date_time_rem.txt");
-    QFile file_date_time_rem(path_date_time_rem);
-    if (file_date_time_rem.open(QIODevice::Append | QIODevice::Text))
-    {
-        QTextStream outstream(&file_date_time_rem);
-        outstream << nem_date_time.year << " " << nem_date_time.month << " " << nem_date_time.day << " ";
-        outstream << nem_date_time.hour << " " << nem_date_time.minute << "\n";
-        file_date_time_rem.close();
-    }
-    else
-    {
-        qDebug() << "fuck in file_date_time_rem";
-    }
-    date_time_obj.array_date_time.push_back(nem_date_time);
-}
 
 date_time create_date_time_object(QDate date, QTime time)
 {
@@ -259,83 +287,43 @@ date_time create_date_time_object(QDate date, QTime time)
     return new_date_time;
 }
 
+
+
 void MainWindow::on_pushButton_clicked()
 {
-    int number_remind;
-    QDateTime dt = QDateTime::currentDateTime();
-    /*qDebug() << dt.date().day();
-    qDebug() << dt.date().month();
-    qDebug() << dt.date().year();
-    qDebug() << dt.time().hour();
-    qDebug() << dt.time().minute();
-    qDebug() << dt.time().second();*/
     QDate choose_date = ui->calendarWidget->selectedDate();
     QTime choose_time = ui->timeEdit->time();
     date_time nem_date_time = create_date_time_object(choose_date, choose_time);
-    //qDebug() << QString(date[0]) << " " << QString(date[1]);
-    /*qDebug() << "/n";
-    qDebug() << choose_date.day();
-    qDebug() << choose_date.month();
-    qDebug() << choose_date.year();
-    qDebug() << choose_time.minute();
-    qDebug() << choose_time.hour();*/
-    QString path_coun_rem = QDir::currentPath().append("/data/coun_rem.txt");
-    //qDebug() << path_coun_rem;
-
     QString remind_text = ui->plainTextEdit->toPlainText();
     //qDebug() << remind_text;
-    QFile file_coun_rem(path_coun_rem);
-    if (file_coun_rem.open(QIODevice::ReadWrite | QIODevice::Text))
-    {
-        //qDebug() << file_coun_rem.size();
-        if (file_coun_rem.size() <= 0.001)
-        {
-            number_remind = 1;
-            QString line = QString::number(number_remind);
-            QTextStream outstream(&file_coun_rem);
-            outstream << line;
-            add_date_time(nem_date_time, date_time_obj);
-            //outstream << date[0] << " " << date[1] << " " << date[2] << " ";
-            //outstream << time[0] << " " << time[1] << "\n";
-            add_new_remind(line, remind_text, date_time_obj);
-        }
-        else
-        {
-            QString line = file_coun_rem.readLine();
-            number_remind = line.toInt();
-            file_coun_rem.seek(file_coun_rem.pos() - line.length());
-            //qDebug() << line << "    " << file_coun_rem.pos() << "    " << line.length();
-            number_remind++;
-            QString s = QString::number(number_remind);
-            add_date_time(nem_date_time, date_time_obj);
-            add_new_remind(s, remind_text, date_time_obj);
-            QTextStream outstream(&file_coun_rem);
-            outstream << s;
-        }
-        /*while (!file_coun_rem.atEnd())
-        {
-            line = file_coun_rem.readLine();
-            string = line;
-            if (string.contains(rx))
-            {
-                std::cout << "  " << qPrintable(string);
-                file.seek(file.pos() - line.length());
 
-                line.clear();
-                line.insert(0,string.toLower());
-                file.write(line);
-            }
-        }*/
-        file_coun_rem.close();
+
+    add_new_remind(remind_text);
+    date_time_obj.array_messages.push_back(remind_text);
+    QString file_name;
+    if (this->date_time_obj.file_path != "")
+    {
+        QStringList shortList = this->date_time_obj.file_path.split('/');
+        file_name = shortList[shortList.count()-1];
+        QFile::copy(this->date_time_obj.file_path,QDir::currentPath().append("/data/documents/").append(file_name));
+        //file_name = "'"+file_name+"'";
     }
     else
-        qDebug() << "fuck in file_coun_rem";
-    //uiTimeIzd->setText(dt.toString());
+        file_name = "NULL";
+
+    add_date_time(nem_date_time, file_name);
+    date_time_obj.array_file_names.push_back(file_name);
+    date_time_obj.array_date_time.push_back(nem_date_time);
+    this->date_time_obj.file_path = "";
+    ui->label_file->setText("Файл не выбран");
+
 }
 
 void MainWindow::on_pushButton_2_clicked()
 {
-    date_time_obj.update_arrays();
+
+
+    //date_time_obj.update_arrays();
     for (int i = 0; i < date_time_obj.array_date_time.size();i++)
     {
         qDebug() << date_time_obj.array_date_time[i].day << " " << date_time_obj.array_date_time[i].month << " " << date_time_obj.array_date_time[i].year << " "
@@ -354,5 +342,15 @@ void MainWindow::on_pushButton_2_clicked()
 void MainWindow::on_pushButton_4_clicked()
 {
     stat_win->show();
-    emit sendData(&date_time_obj.array_date_time, &date_time_obj.array_messages);
+    emit sendData(&date_time_obj.array_date_time, &date_time_obj.array_messages, &date_time_obj.array_file_names);
+}
+
+void MainWindow::on_pushButton_3_clicked()
+{
+    date_time_obj.file_path = QFileDialog::getOpenFileName(0,
+                                QString::fromUtf8("Загрузить файл"),
+                                QDir::currentPath(),
+                                "All files (*.*)");
+    //qDebug() << fileName;
+    ui->label_file->setText("Файл загружен");
 }

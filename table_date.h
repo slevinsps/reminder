@@ -15,13 +15,15 @@ class table_date : public QMainWindow
 public:
     std::vector <date_time> *array_date_time;
     std::vector <QString> *array_messages;
+    std::vector <QString> *array_file_names;
     explicit table_date(QWidget *parent = 0);
+    void closeEvent( QCloseEvent* event );
     ~table_date();
 
 private:
     Ui::table_date *ui;
 public slots:
-    void recieveData(std::vector <date_time>*, std::vector <QString>*);
+    void recieveData(std::vector <date_time>*, std::vector <QString>*, std::vector <QString>*);
 private slots:
     void on_delete_button_clicked();
     void on_clear_button_clicked();
