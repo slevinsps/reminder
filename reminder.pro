@@ -36,3 +36,7 @@ HEADERS += \
 FORMS += \
         mainwindow.ui \
     table_date.ui
+
+win32:RC_ICONS += /res/clock.ico
+
+RESOURCES +=

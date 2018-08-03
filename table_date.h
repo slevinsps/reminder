@@ -15,7 +15,7 @@ class table_date : public QMainWindow
 public:
     std::vector <date_time> *array_date_time;
     std::vector <QString> *array_messages;
-    std::vector <QString> *array_file_names;
+    std::vector <Files> *array_file_names;
     explicit table_date(QWidget *parent = 0);
     void closeEvent( QCloseEvent* event );
     ~table_date();
@@ -23,10 +23,13 @@ public:
 private:
     Ui::table_date *ui;
 public slots:
-    void recieveData(std::vector <date_time>*, std::vector <QString>*, std::vector <QString>*);
+    void recieveData(std::vector <date_time>*, std::vector <QString>*, std::vector <Files>*);
 private slots:
     void on_delete_button_clicked();
     void on_clear_button_clicked();
+signals:
+    void add_new_remind_sig(QString);
+    void add_date_time_sig(date_time&, std::vector <QString>&);
 };
 
 #endif // TABLE_DATE_H
