@@ -26,16 +26,21 @@ DEFINES += QT_DEPRECATED_WARNINGS
 SOURCES += \
         main.cpp \
         mainwindow.cpp \
-    table_date.cpp
+    table_date.cpp \
+    remind.cpp \
+    logger.cpp
 
 HEADERS += \
         mainwindow.h \
     table_date.h \
-    structers.h
+    structers.h \
+    remind.h \
+    logger.h
 
 FORMS += \
         mainwindow.ui \
-    table_date.ui
+    table_date.ui \
+    remind.ui
 
 win32:RC_ICONS += /res/clock.ico
 

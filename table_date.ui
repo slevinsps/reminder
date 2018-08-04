@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>662</width>
-    <height>405</height>
+    <width>717</width>
+    <height>425</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -19,9 +19,14 @@
      <rect>
       <x>10</x>
       <y>10</y>
-      <width>501</width>
-      <height>341</height>
+      <width>571</width>
+      <height>361</height>
      </rect>
+    </property>
+    <property name="font">
+     <font>
+      <pointsize>11</pointsize>
+     </font>
     </property>
     <attribute name="verticalHeaderDefaultSectionSize">
      <number>120</number>
@@ -50,11 +55,16 @@
    <widget class="QPushButton" name="clear_button">
     <property name="geometry">
      <rect>
-      <x>540</x>
-      <y>310</y>
+      <x>600</x>
+      <y>330</y>
       <width>101</width>
       <height>51</height>
      </rect>
+    </property>
+    <property name="font">
+     <font>
+      <pointsize>12</pointsize>
+     </font>
     </property>
     <property name="text">
      <string>Очистить</string>
@@ -63,11 +73,16 @@
    <widget class="QPushButton" name="delete_button">
     <property name="geometry">
      <rect>
-      <x>530</x>
+      <x>590</x>
       <y>10</y>
       <width>121</width>
       <height>71</height>
      </rect>
+    </property>
+    <property name="font">
+     <font>
+      <pointsize>14</pointsize>
+     </font>
     </property>
     <property name="text">
      <string>Удалить</string>
@@ -79,7 +94,7 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>662</width>
+     <width>717</width>
      <height>21</height>
     </rect>
    </property>

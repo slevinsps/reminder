@@ -5,6 +5,7 @@
 #include <QFile>
 #include <QDir>
 #include <QDesktopServices>
+#include "logger.h"
 
 table_date::table_date(QWidget *parent) :
     QMainWindow(parent),
@@ -61,17 +62,19 @@ void table_date::recieveData(std::vector<date_time>* one, std::vector<QString>* 
         ui->tableWidget->setItem   ( ui->tableWidget->rowCount()-1, 1, item2);
         ui->tableWidget->setItem   ( ui->tableWidget->rowCount()-1, 2, item3);
         ui->tableWidget->setItem   ( ui->tableWidget->rowCount()-1, 3, item4);
-        ui->tableWidget->setColumnWidth(0, 65);
+        ui->tableWidget->setColumnWidth(0, 80);
         ui->tableWidget->setColumnWidth(1, 50);
         ui->tableWidget->horizontalHeader()->setSectionResizeMode(2, QHeaderView::Stretch);
-        ui->tableWidget->setColumnWidth(3, 100);
+        ui->tableWidget->setColumnWidth(3, 130);
     }
 }
 
 void table_date::closeEvent( QCloseEvent* event )
 {
-    QFile(QDir::currentPath().append("/data/reminders.txt")).remove();
-    QFile(QDir::currentPath().append("/data/date_time_rem.txt")).remove();
+    if (!QFile(QDir::currentPath().append("/data/reminders.txt")).remove())
+        add_to_log(Q_FUNC_INFO,"error in remove reminders.txt");
+    if (!QFile(QDir::currentPath().append("/data/date_time_rem.txt")).remove())
+        add_to_log(Q_FUNC_INFO,"error in remove date_time_rem.txt");
     for(int i = 0; i < (*array_date_time).size(); i++)
     {
         emit add_date_time_sig((*array_date_time)[i], (*array_file_names)[i].files_arr);
@@ -83,10 +86,11 @@ void table_date::on_delete_button_clicked()
 {
     if ((*array_date_time).empty())
     {
-        QMessageBox msgBox;
+        /*QMessageBox msgBox;
         msgBox.setWindowTitle("Информация");
         msgBox.setText("Список напоминаний пуст!");
-        msgBox.exec();
+        msgBox.exec();*/
+        emit send_trey_not("Список напоминаний пуст!","");
     }
     else
     {
@@ -99,7 +103,8 @@ void table_date::on_delete_button_clicked()
         for (int j = 0; j < (*array_file_names)[i].files_arr.size(); j++)
         {
             //str_files.append(array_file_names[i].files_arr[j]).append("\n");
-            QFile(QDir::currentPath().append("/data/documents/").append((*array_file_names)[i].files_arr[j])).remove();
+            if (!QFile(QDir::currentPath().append("/data/documents/").append((*array_file_names)[i].files_arr[j])).remove())
+                add_to_log(Q_FUNC_INFO,"error in remove one document");
         }
         (*array_date_time).erase((*array_date_time).begin()+i);
         (*array_messages).erase((*array_messages).begin()+i);
@@ -111,10 +116,11 @@ void table_date::on_clear_button_clicked()
 {
     if ((*array_date_time).empty())
     {
-        QMessageBox msgBox;
+        /*QMessageBox msgBox;
         msgBox.setWindowTitle("Информация");
         msgBox.setText("Список напоминаний пуст!");
-        msgBox.exec();
+        msgBox.exec();*/
+        emit send_trey_not("Список напоминаний пуст!","");
     }
     else
     {
@@ -124,8 +130,14 @@ void table_date::on_clear_button_clicked()
         name_table << "Дата" << "Время" << "Напоминание" << "Файл";
         ui->tableWidget->setHorizontalHeaderLabels(name_table);
         QDir dir(QDir::currentPath().append("/data/documents/"));
-        dir.removeRecursively();
-        QDir().mkpath(QDir::currentPath().append("/data/documents"));
+        if (!dir.removeRecursively())
+        {
+            add_to_log(Q_FUNC_INFO,"error in removeRecursively");
+        }
+        if (!QDir().mkpath(QDir::currentPath().append("/data/documents")))
+        {
+            add_to_log(Q_FUNC_INFO,"error in mkpath");
+        }
 
         (*array_date_time).clear();
         (*array_messages).clear();

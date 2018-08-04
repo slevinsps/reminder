@@ -61,7 +61,7 @@
     </property>
     <property name="font">
      <font>
-      <pointsize>12</pointsize>
+      <pointsize>14</pointsize>
      </font>
     </property>
     <property name="text">
@@ -77,19 +77,24 @@
       <height>171</height>
      </rect>
     </property>
+    <property name="font">
+     <font>
+      <pointsize>14</pointsize>
+     </font>
+    </property>
    </widget>
    <widget class="QPushButton" name="all_rem_Button">
     <property name="geometry">
      <rect>
-      <x>30</x>
+      <x>20</x>
       <y>430</y>
-      <width>171</width>
+      <width>191</width>
       <height>151</height>
      </rect>
     </property>
     <property name="font">
      <font>
-      <pointsize>12</pointsize>
+      <pointsize>14</pointsize>
      </font>
     </property>
     <property name="text">
@@ -155,13 +160,13 @@
      <rect>
       <x>220</x>
       <y>430</y>
-      <width>151</width>
+      <width>161</width>
       <height>101</height>
      </rect>
     </property>
     <property name="font">
      <font>
-      <pointsize>12</pointsize>
+      <pointsize>14</pointsize>
      </font>
     </property>
     <property name="text">
@@ -203,13 +208,13 @@
      <rect>
       <x>220</x>
       <y>540</y>
-      <width>151</width>
+      <width>161</width>
       <height>41</height>
      </rect>
     </property>
     <property name="font">
      <font>
-      <pointsize>10</pointsize>
+      <pointsize>12</pointsize>
      </font>
     </property>
     <property name="text">

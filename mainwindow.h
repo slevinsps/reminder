@@ -1,8 +1,13 @@
 #ifndef MAINWINDOW_H
 #define MAINWINDOW_H
+#include <QMessageBox>
 #include <QMainWindow>
 #include <QSystemTrayIcon>
+#include <QTimer>
+#include <qDebug>
+
 #include "table_date.h"
+#include "remind.h"
 #include "structers.h"
 namespace Ui {
 class MainWindow;
@@ -23,17 +28,47 @@ public:
     std::vector <Files> array_file_names;
     int update_arrays(void);
     int qstring_to_date_time(QString line, date_time &new_date_time, std::vector <QString>& filename);
+
     My_date_time()
     {
         update_arrays();
+
     }
 public slots:
     void remind_demon();
 signals:
+    close_table();
     stop_timer();
     start_timer(int);
-    show_form();
+    show_rem_win();
+    void sendData_withi(std::vector <date_time>*, std::vector <QString>*, std::vector <Files>*, int);
 };
+
+
+
+
+class MessageBox : public QMessageBox
+{
+    Q_OBJECT
+public:
+    MessageBox()
+    {
+        QTimer *tmr  = new QTimer();
+        tmr->setInterval(2000);
+        tmr->start();
+        connect(tmr, SIGNAL(timeout()), tmr, SLOT(stop()));
+        connect(tmr, SIGNAL(timeout()), this, SLOT(close_all()));
+    }
+private slots:
+    void close_all()
+    {
+        qDebug() << "mamammamama";
+        //this.button(QMessageBox::Ok).animateClick
+    }
+
+};
+
+
 
 class MainWindow : public QMainWindow
 {
@@ -57,16 +92,25 @@ private slots:
 
     void add_new_remind_slot(QString remind_text);
     void add_date_time_slot(date_time &nem_date_time, std::vector <QString>&);
-
+    void add_trey_not(QString, QString);
     void on_clear_file_Button_clicked();
+    void close_stat_win();
+
+
+
 
 signals:
     void sendData(std::vector <date_time>*, std::vector <QString>*, std::vector <Files>*);
+    void send_trey_not(QString, QString);
+
 
 private:
+    QTimer *tmr_qm;
+    QMessageBox qm;
     Ui::MainWindow *ui;
     QSystemTrayIcon* m_trayIcon;
     table_date* stat_win;
+    remind *rem_win;
 };
 
 #endif // MAINWINDOW_H

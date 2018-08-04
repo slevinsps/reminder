@@ -30,6 +30,7 @@ private slots:
 signals:
     void add_new_remind_sig(QString);
     void add_date_time_sig(date_time&, std::vector <QString>&);
+    void send_trey_not(QString, QString);
 };
 
 #endif // TABLE_DATE_H
