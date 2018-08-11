@@ -5,6 +5,8 @@
 #include <QFile>
 #include <QDir>
 #include <QDesktopServices>
+#include <QUrl>
+
 #include "logger.h"
 
 table_date::table_date(QWidget *parent) :
@@ -16,6 +18,10 @@ table_date::table_date(QWidget *parent) :
     //ui->centralwidget
     ui->tableWidget->setSelectionBehavior(QAbstractItemView::SelectRows);
     ui->tableWidget->setEditTriggers(QAbstractItemView::NoEditTriggers);
+    update_win = new Update();
+    update_win->setFixedSize(563,591);
+    connect(this, SIGNAL(sendData(date_time*,QString*, Files*, int)), update_win, SLOT(recieveData(date_time*,QString*, Files*, int)));
+    connect(update_win, SIGNAL(update_table_sig(int)), this, SLOT(update_table(int)));
 }
 
 table_date::~table_date()
@@ -67,6 +73,27 @@ void table_date::recieveData(std::vector<date_time>* one, std::vector<QString>* 
         ui->tableWidget->horizontalHeader()->setSectionResizeMode(2, QHeaderView::Stretch);
         ui->tableWidget->setColumnWidth(3, 130);
     }
+    ui->tableWidget->selectRow(0);
+}
+
+void table_date::update_table(int i)
+{
+    QTableWidgetItem *item1, *item2, *item3, *item4;
+    item1 = new QTableWidgetItem(QString::number((*array_date_time)[i].day).append(".").append(QString::number((*array_date_time)[i].month)).append(".").append(QString::number((*array_date_time)[i].year)));
+    item2 = new QTableWidgetItem(QString::number((*array_date_time)[i].hour).append(":").append(QString::number((*array_date_time)[i].minute)));
+    item3 = new QTableWidgetItem((*array_messages)[i]);
+    QString str = "";
+    for (int j = 0; j < (*array_file_names)[i].files_arr.size(); j++)
+    {
+        str.append((*array_file_names)[i].files_arr[j]).append("\n");
+    }
+    item4 = new QTableWidgetItem(str);
+
+    //ui->tableWidget->insertRow ( ui->tableWidget->rowCount() );
+    ui->tableWidget->setItem   ( i, 0, item1);
+    ui->tableWidget->setItem   ( i, 1, item2);
+    ui->tableWidget->setItem   ( i, 2, item3);
+    ui->tableWidget->setItem   ( i, 3, item4);
 }
 
 void table_date::closeEvent( QCloseEvent* event )
@@ -142,5 +169,37 @@ void table_date::on_clear_button_clicked()
         (*array_date_time).clear();
         (*array_messages).clear();
         (*array_file_names).clear();
+    }
+}
+
+void table_date::on_updateButton_clicked()
+{
+    int i = ui->tableWidget->currentRow();
+    if (i < 0)
+    {
+        return;
+    }
+    update_win->show();
+
+    emit sendData(&(*array_date_time)[i],&(*array_messages)[i],&(*array_file_names)[i], i);
+
+}
+
+void table_date::on_openButton_clicked()
+{
+    int i = ui->tableWidget->currentRow();
+    if (i < 0)
+    {
+        return;
+    }
+    for (int j = 0; j < (*array_file_names)[i].files_arr.size(); j++)
+    {
+        QString str = QDir::currentPath().append("/data/documents/").append((*array_file_names)[i].files_arr[j]);
+        if (!QDesktopServices::openUrl(QUrl::fromLocalFile(str)))
+        {
+            //QMessageBox::information(this, "Ошибка", QString("Невозможно открыть файл ").append((*array_file_names)[i].files_arr[j]));
+            emit send_trey_not(QString("Невозможно открыть файл ").append((*array_file_names)[i].files_arr[j]),"");
+            //add_to_log(Q_FUNC_INFO,QString("error in openUrl ").append((*array_file_names)[i].files_arr[j]));
+        }
     }
 }

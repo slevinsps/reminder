@@ -8,7 +8,9 @@
 
 #include "table_date.h"
 #include "remind.h"
+#include "history.h"
 #include "structers.h"
+
 namespace Ui {
 class MainWindow;
 }
@@ -84,8 +86,8 @@ public:
 private slots:
     void on_createButton_clicked();
 
-    void onTrayIconActivated( QSystemTrayIcon::ActivationReason reason );
-    void onShowMessageInTray();
+    void iconActivated( QSystemTrayIcon::ActivationReason reason );
+    //void onShowMessageInTray();
 
     void on_all_rem_Button_clicked();
     void on_add_file_Button_clicked();
@@ -99,10 +101,12 @@ private slots:
 
 
 
+    void on_pushButton_clicked();
+
 signals:
     void sendData(std::vector <date_time>*, std::vector <QString>*, std::vector <Files>*);
     void send_trey_not(QString, QString);
-
+    void update_history(void);
 
 private:
     QTimer *tmr_qm;
@@ -111,6 +115,7 @@ private:
     QSystemTrayIcon* m_trayIcon;
     table_date* stat_win;
     remind *rem_win;
+    History *hist_win;
 };
 
 #endif // MAINWINDOW_H

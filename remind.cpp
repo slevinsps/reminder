@@ -59,10 +59,10 @@ void remind::recieveData_withi(std::vector<date_time>* one, std::vector<QString>
 void remind::on_deleteButton_clicked()
 {
     int i = num_i;
-    for (int j = 0; j < (*array_file_names)[i].files_arr.size(); j++)
+    /*for (int j = 0; j < (*array_file_names)[i].files_arr.size(); j++)
     {
         QFile(QDir::currentPath().append("/data/documents/").append((*array_file_names)[i].files_arr[j])).remove();
-    }
+    }*/
     (*array_date_time).erase((*array_date_time).begin()+i);
     (*array_messages).erase((*array_messages).begin()+i);
     (*array_file_names).erase((*array_file_names).begin()+i);

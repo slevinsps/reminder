@@ -18,28 +18,35 @@ MainWindow::MainWindow(QWidget *parent) :
 {
     ui->setupUi(this);
 
+
    /********************************************/
     // Загрузкка в трей
     m_trayIcon = new QSystemTrayIcon( QIcon( QDir::currentPath().append("/res/clock.ico") ), this );
-    connect(
+    m_trayIcon->setToolTip("Tray Program" "\n"
+                             "Работа со сворачиванием программы трей");
+    /*connect(
         m_trayIcon,
         SIGNAL( activated( QSystemTrayIcon::ActivationReason ) ),
         SLOT( onTrayIconActivated( QSystemTrayIcon::ActivationReason ) )
-    );
+    );*/
 
     QMenu* menu = new QMenu;
 
-    QAction* exitAction = menu->addAction( "Exit" );
+    QAction* exitAction = menu->addAction( "Выход" );
     connect( exitAction, SIGNAL( triggered( bool ) ), qApp, SLOT( quit() ) );
 
     m_trayIcon->setContextMenu( menu );
 
     m_trayIcon->show();
+    connect(m_trayIcon, SIGNAL(activated(QSystemTrayIcon::ActivationReason)),
+                this, SLOT(iconActivated(QSystemTrayIcon::ActivationReason)));
     /********************************************/
     stat_win = new table_date();
-    stat_win->setFixedSize(717,425);
+    stat_win->setFixedSize(729,425);
     rem_win = new remind();
     rem_win->setFixedSize(454,534);
+    hist_win = new History();
+    hist_win->setFixedSize(631,517);
 
     QTimer *tmr  = new QTimer();
     tmr->setInterval(2000);
@@ -64,6 +71,7 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(rem_win, SIGNAL(send_trey_not(QString,QString)), this, SLOT(add_trey_not(QString,QString)));
     connect(stat_win, SIGNAL(send_trey_not(QString,QString)), this, SLOT(add_trey_not(QString,QString)));
     connect(this, SIGNAL(send_trey_not(QString,QString)), this, SLOT(add_trey_not(QString,QString)));
+    connect(this, SIGNAL(update_history()), hist_win, SLOT(update_history()));
     tmr->start();
 
     //Загрука в реестр
@@ -99,12 +107,18 @@ void MainWindow::add_trey_not(QString one, QString two)
     //QMessageBox::information(this, "Информация", one);
 }
 
-void MainWindow::closeEvent( QCloseEvent* event ) {
-    hide();
+void MainWindow::closeEvent( QCloseEvent* event ) {   
     event->ignore();
+    this->hide();
+    /*QSystemTrayIcon::MessageIcon icon = QSystemTrayIcon::MessageIcon(QSystemTrayIcon::Information);
+    m_trayIcon->showMessage("Reminder",
+                                  trUtf8("Приложение свернуто в трей. Для того чтобы, "
+                                         "развернуть окно приложения, щелкните по иконке приложения в трее"),
+                                  icon,
+                                  1000);*/
 }
 
-void MainWindow::onTrayIconActivated( QSystemTrayIcon::ActivationReason reason ) {
+/*void MainWindow::onTrayIconActivated( QSystemTrayIcon::ActivationReason reason ) {
     switch( reason ) {
     case QSystemTrayIcon::Trigger:
         setVisible( !isVisible() );
@@ -118,7 +132,21 @@ void MainWindow::onTrayIconActivated( QSystemTrayIcon::ActivationReason reason )
 void MainWindow::onShowMessageInTray() {
     m_trayIcon->showMessage( "Message title", "Message text", QSystemTrayIcon::Information );
 }
-
+*/
+void MainWindow::iconActivated(QSystemTrayIcon::ActivationReason reason)
+{
+    switch (reason){
+    case QSystemTrayIcon::Trigger:
+        if(!this->isVisible()){
+            this->show();
+        } else {
+            this->hide();
+        }
+        break;
+    default:
+        break;
+    }
+}
 
 int My_date_time::qstring_to_date_time(QString line, date_time &new_date_time, std::vector <QString>& filename)
 {
@@ -201,6 +229,64 @@ int My_date_time::update_arrays()
     return 0;
 }
 
+
+void add_history(QString remind_text, date_time &nem_date_time, std::vector <QString>& filename)
+{
+    {
+        QString path_rem = QDir::currentPath().append("/data/history/reminders_h.txt");
+        //qDebug() << path_rem;
+        QFile file_rem(path_rem);
+        if (file_rem.open(QIODevice::Append | QIODevice::Text))
+        {
+            //qDebug() << "dfdf";
+            QTextStream outstream(&file_rem);
+            outstream << remind_text;
+            outstream << "\n@$@@$@@$@\n";
+            file_rem.close();
+        }
+        else
+        {
+            add_to_log(Q_FUNC_INFO,"error in add_history remind_text");
+            qDebug() << "error in open add_history remind_text";
+        }
+    }
+    QString path_date_time_rem = QDir::currentPath().append("/data/history/date_time_rem_h.txt");
+    QFile file_date_time_rem(path_date_time_rem);
+    if (file_date_time_rem.open(QIODevice::Append | QIODevice::Text))
+    {
+        QTextStream outstream(&file_date_time_rem);
+        outstream << nem_date_time.year << "#$#" << nem_date_time.month << "#$#" << nem_date_time.day << "#$#";
+        outstream << nem_date_time.hour << "#$#" << nem_date_time.minute;
+
+        QString file_name_str;
+
+        if (!filename.empty())
+        {
+            qDebug() << filename;
+            for (int i = 0; i < filename.size(); i++)
+            {
+                outstream << "#$#" << filename[i] ;
+            }
+            outstream << "\n";
+        }
+        else
+        {
+            file_name_str = "NULL";
+            filename.push_back(file_name_str);
+            outstream << "#$#" << file_name_str << "\n";
+        }
+
+
+        file_date_time_rem.close();
+    }
+    else
+    {
+        add_to_log(Q_FUNC_INFO,"error in add_history nem_date_time");
+        qDebug() << "error in open add_history nem_date_time";
+    }
+
+}
+
 void add_new_remind(QString remind_text)
 {
     QString path_rem = QDir::currentPath().append("/data/reminders.txt");
@@ -219,6 +305,8 @@ void add_new_remind(QString remind_text)
         add_to_log(Q_FUNC_INFO,"error in file_rem");
         qDebug() << "error in open file_rem";
     }
+
+
 }
 void MainWindow::add_new_remind_slot(QString remind_text)
 {
@@ -333,7 +421,10 @@ void MainWindow::on_createButton_clicked()
         {
             QStringList shortList = date_time_obj.file_path[i].split('/');
             QString file_name_str = shortList[shortList.count()-1];
-
+            if (QFile::exists(QDir::currentPath().append("/data/documents/").append(file_name_str)))
+            {
+                QFile::remove(QDir::currentPath().append("/data/documents/").append(file_name_str));
+            }
             bool ok = QFile::copy(date_time_obj.file_path[i],QDir::currentPath().append("/data/documents/").append(file_name_str));
             if (!ok)
             {
@@ -353,12 +444,14 @@ void MainWindow::on_createButton_clicked()
     }
     qDebug() << date_time_obj.file_path;
     add_date_time(nem_date_time, date_time_obj.file_path);
+    add_history(remind_text, nem_date_time, date_time_obj.file_path);
     Files newfiles;
     newfiles.files_arr = date_time_obj.file_path;
     date_time_obj.array_file_names.push_back(newfiles);
     date_time_obj.array_date_time.push_back(nem_date_time);
     this->date_time_obj.file_path.clear();
     ui->label_file->setText("Файл не выбран");
+    ui->plainTextEdit->clear();
     emit send_trey_not(QString("Напоминание добавлено!"),"");
     //m_trayIcon->showMessage("Напоминание добавлено!","j");
 }
@@ -398,3 +491,9 @@ void MainWindow::on_clear_file_Button_clicked()
 }
 
 
+
+void MainWindow::on_pushButton_clicked()
+{
+    hist_win->show();
+    emit update_history();
+}

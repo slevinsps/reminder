@@ -28,19 +28,25 @@ SOURCES += \
         mainwindow.cpp \
     table_date.cpp \
     remind.cpp \
-    logger.cpp
+    logger.cpp \
+    update.cpp \
+    history.cpp
 
 HEADERS += \
         mainwindow.h \
     table_date.h \
     structers.h \
     remind.h \
-    logger.h
+    logger.h \
+    update.h \
+    history.h
 
 FORMS += \
         mainwindow.ui \
     table_date.ui \
-    remind.ui
+    remind.ui \
+    update.ui \
+    history.ui
 
 win32:RC_ICONS += /res/clock.ico
 
