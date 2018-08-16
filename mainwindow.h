@@ -103,6 +103,8 @@ private slots:
 
     void on_pushButton_clicked();
 
+    void exit_app();
+
 signals:
     void sendData(std::vector <date_time>*, std::vector <QString>*, std::vector <Files>*);
     void send_trey_not(QString, QString);

@@ -22,8 +22,8 @@ MainWindow::MainWindow(QWidget *parent) :
    /********************************************/
     // Загрузкка в трей
     m_trayIcon = new QSystemTrayIcon( QIcon( QDir::currentPath().append("/res/clock.ico") ), this );
-    m_trayIcon->setToolTip("Tray Program" "\n"
-                             "Работа со сворачиванием программы трей");
+    m_trayIcon->setToolTip("Reminder" "\n"
+                             "Нажмите иконку, чтобы открыть");
     /*connect(
         m_trayIcon,
         SIGNAL( activated( QSystemTrayIcon::ActivationReason ) ),
@@ -33,13 +33,13 @@ MainWindow::MainWindow(QWidget *parent) :
     QMenu* menu = new QMenu;
 
     QAction* exitAction = menu->addAction( "Выход" );
-    connect( exitAction, SIGNAL( triggered( bool ) ), qApp, SLOT( quit() ) );
+    connect( exitAction, SIGNAL( triggered( bool ) ), this, SLOT( exit_app() ) );
 
     m_trayIcon->setContextMenu( menu );
-
-    m_trayIcon->show();
     connect(m_trayIcon, SIGNAL(activated(QSystemTrayIcon::ActivationReason)),
                 this, SLOT(iconActivated(QSystemTrayIcon::ActivationReason)));
+    m_trayIcon->show();
+
     /********************************************/
     stat_win = new table_date();
     stat_win->setFixedSize(729,425);
@@ -496,4 +496,9 @@ void MainWindow::on_pushButton_clicked()
 {
     hist_win->show();
     emit update_history();
+}
+
+void MainWindow::exit_app()
+{
+    QApplication::exit ();
 }
