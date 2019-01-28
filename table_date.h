@@ -3,6 +3,7 @@
 //#include "mainwindow.h"
 #include "structers.h"
 #include <QMainWindow>
+#include <QMessageBox>
 #include "update.h"
 
 namespace Ui {
@@ -23,6 +24,7 @@ public:
 
 private:
     Ui::table_date *ui;
+    QMessageBox qm;
     Update *update_win;
 public slots:
     void recieveData(std::vector <date_time>*, std::vector <QString>*, std::vector <Files>*);

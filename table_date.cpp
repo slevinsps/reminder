@@ -1,7 +1,7 @@
 #include "table_date.h"
 #include "ui_table_date.h"
 #include <qDebug>
-#include <QMessageBox>
+
 #include <QFile>
 #include <QDir>
 #include <QDesktopServices>
@@ -109,8 +109,67 @@ void table_date::closeEvent( QCloseEvent* event )
     }
 }
 
+void add_history(QString remind_text, date_time &nem_date_time, std::vector <QString>& filename)
+{
+    {
+        QString path_rem = QDir::currentPath().append("/data/history/reminders_h.txt");
+        //qDebug() << path_rem;
+        QFile file_rem(path_rem);
+        if (file_rem.open(QIODevice::Append | QIODevice::Text))
+        {
+            //qDebug() << "dfdf";
+            QTextStream outstream(&file_rem);
+            outstream << remind_text;
+            outstream << "\n@$@@$@@$@\n";
+            file_rem.close();
+        }
+        else
+        {
+            add_to_log(Q_FUNC_INFO,"error in add_history remind_text");
+            qDebug() << "error in open add_history remind_text";
+        }
+    }
+    QString path_date_time_rem = QDir::currentPath().append("/data/history/date_time_rem_h.txt");
+    QFile file_date_time_rem(path_date_time_rem);
+    if (file_date_time_rem.open(QIODevice::Append | QIODevice::Text))
+    {
+        QTextStream outstream(&file_date_time_rem);
+        outstream << nem_date_time.year << "#$#" << nem_date_time.month << "#$#" << nem_date_time.day << "#$#";
+        outstream << nem_date_time.hour << "#$#" << nem_date_time.minute;
+
+        QString file_name_str;
+
+        if (!filename.empty())
+        {
+            qDebug() << filename;
+            for (int i = 0; i < filename.size(); i++)
+            {
+                outstream << "#$#" << filename[i] ;
+            }
+            outstream << "\n";
+        }
+        else
+        {
+            file_name_str = "NULL";
+            filename.push_back(file_name_str);
+            outstream << "#$#" << file_name_str << "\n";
+        }
+
+
+        file_date_time_rem.close();
+    }
+    else
+    {
+        add_to_log(Q_FUNC_INFO,"error in add_history nem_date_time");
+        qDebug() << "error in open add_history nem_date_time";
+    }
+
+}
+
 void table_date::on_delete_button_clicked()
 {
+
+
     if ((*array_date_time).empty())
     {
         /*QMessageBox msgBox;
@@ -121,21 +180,45 @@ void table_date::on_delete_button_clicked()
     }
     else
     {
-        int i = ui->tableWidget->currentRow();
-        if (i < 0)
-        {
-            return;
-        }
-        ui->tableWidget->removeRow(i);
-        for (int j = 0; j < (*array_file_names)[i].files_arr.size(); j++)
-        {
-            //str_files.append(array_file_names[i].files_arr[j]).append("\n");
-            if (!QFile(QDir::currentPath().append("/data/documents/").append((*array_file_names)[i].files_arr[j])).remove())
-                add_to_log(Q_FUNC_INFO,"error in remove one document");
-        }
-        (*array_date_time).erase((*array_date_time).begin()+i);
-        (*array_messages).erase((*array_messages).begin()+i);
-        (*array_file_names).erase((*array_file_names).begin()+i);
+        qm.setText("Вы уверены что хотите удалить напоминание?");
+        qm.setIcon(QMessageBox::Information);
+        qm.setStandardButtons(QMessageBox::Yes | QMessageBox::No);
+        qm.setButtonText(QMessageBox::Yes, tr("Да"));
+        qm.setButtonText(QMessageBox::No, tr("Нет"));
+        qm.button(QMessageBox::No)->animateClick(1500);
+        int button = qm.exec();
+         if (button == QMessageBox::Yes) {
+             int i = ui->tableWidget->currentRow();
+             if (i < 0)
+             {
+                 return;
+             }
+             add_history((*array_messages)[i], (*array_date_time)[i], (*array_file_names)[i].files_arr);
+             ui->tableWidget->removeRow(i);
+             for (int j = 0; j < (*array_file_names)[i].files_arr.size(); j++)
+             {
+                 //str_files.append(array_file_names[i].files_arr[j]).append("\n");
+                 QString file_name_str = (*array_file_names)[i].files_arr[j];
+                 if (QFile::exists(QDir::currentPath().append("/data/history/documents/").append(file_name_str)))
+                 {
+                     QFile::remove(QDir::currentPath().append("/data/history/documents/").append(file_name_str));
+                 }
+                 bool ok = QFile::copy(QDir::currentPath().append("/data/documents/").append(file_name_str),
+                                       QDir::currentPath().append("/data/history/documents/").append(file_name_str));
+                 if (!ok)
+                 {
+                     //QMessageBox::information(this, "Ошибка", QString("Не удалось скопировать файл ").append(file_name_str));
+                     //m_trayIcon->showMessage(QString("Не удалось скопировать файл ").append(file_name_str),"");
+                     emit send_trey_not(QString("Не удалось скопировать файл ").append(file_name_str),"");
+                 }
+                 if (!QFile(QDir::currentPath().append("/data/documents/").append((*array_file_names)[i].files_arr[j])).remove())
+                     add_to_log(Q_FUNC_INFO,"error in remove one document");
+             }
+             (*array_date_time).erase((*array_date_time).begin()+i);
+             (*array_messages).erase((*array_messages).begin()+i);
+             (*array_file_names).erase((*array_file_names).begin()+i);
+         }
+
     }
 }
 
@@ -151,24 +234,33 @@ void table_date::on_clear_button_clicked()
     }
     else
     {
-        ui->tableWidget->clear();
-        ui->tableWidget->setRowCount(0);
-        QStringList name_table;
-        name_table << "Дата" << "Время" << "Напоминание" << "Файл";
-        ui->tableWidget->setHorizontalHeaderLabels(name_table);
-        QDir dir(QDir::currentPath().append("/data/documents/"));
-        if (!dir.removeRecursively())
-        {
-            add_to_log(Q_FUNC_INFO,"error in removeRecursively");
-        }
-        if (!QDir().mkpath(QDir::currentPath().append("/data/documents")))
-        {
-            add_to_log(Q_FUNC_INFO,"error in mkpath");
-        }
+        qm.setText("Вы уверены что хотите удалить напоминания?");
+        qm.setIcon(QMessageBox::Information);
+        qm.setStandardButtons(QMessageBox::Yes | QMessageBox::No);
+        qm.setButtonText(QMessageBox::Yes, tr("Да"));
+        qm.setButtonText(QMessageBox::No, tr("Нет"));
+        qm.button(QMessageBox::No)->animateClick(1500);
+        int button = qm.exec();
+        if (button == QMessageBox::Yes) {
+            ui->tableWidget->clear();
+            ui->tableWidget->setRowCount(0);
+            QStringList name_table;
+            name_table << "Дата" << "Время" << "Напоминание" << "Файл";
+            ui->tableWidget->setHorizontalHeaderLabels(name_table);
+            QDir dir(QDir::currentPath().append("/data/documents/"));
+            if (!dir.removeRecursively())
+            {
+                add_to_log(Q_FUNC_INFO,"error in removeRecursively");
+            }
+            if (!QDir().mkpath(QDir::currentPath().append("/data/documents")))
+            {
+                add_to_log(Q_FUNC_INFO,"error in mkpath");
+            }
 
-        (*array_date_time).clear();
-        (*array_messages).clear();
-        (*array_file_names).clear();
+            (*array_date_time).clear();
+            (*array_messages).clear();
+            (*array_file_names).clear();
+         }
     }
 }
 

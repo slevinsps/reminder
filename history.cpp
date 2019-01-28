@@ -1,11 +1,9 @@
-#include "history.h"
-#include "ui_history.h"
-#include "structers.h"
-#include "logger.h"
 #include <QFile>
 #include <QDir>
 #include <QDebug>
 #include <QTextStream>
+#include "history.h"
+#include <QMessageBox>
 History::History(QWidget *parent) :
     QMainWindow(parent),
     ui(new Ui::History)
@@ -44,9 +42,9 @@ int qstring_to_date_time(QString line, date_time &new_date_time, std::vector <QS
 
 void History::update_history()
 {
-    std::vector <date_time> array_date_time;
-    std::vector <QString> array_messages;
-    std::vector <Files> array_file_names;
+    array_date_time.clear();
+    array_messages.clear();
+    array_file_names.clear();
     {
         int count = 0;
 
@@ -141,14 +139,20 @@ void History::update_history()
         ui->tableWidget->horizontalHeader()->setSectionResizeMode(2, QHeaderView::Stretch);
         ui->tableWidget->setColumnWidth(3, 140);
     }
-    array_date_time.clear();
-    array_messages.clear();
-    array_file_names.clear();
+
 }
 
 void History::on_clear_button_clicked()
 {
-
+    QMessageBox qm;
+    qm.setText("Вы уверены что хотите очистить историю?");
+    qm.setIcon(QMessageBox::Information);
+    qm.setStandardButtons(QMessageBox::Yes | QMessageBox::No);
+    qm.button(QMessageBox::No)->animateClick(1500);
+    qm.setButtonText(QMessageBox::Yes, tr("Да"));
+    qm.setButtonText(QMessageBox::No, tr("Нет"));
+    int button = qm.exec();
+    if (button == QMessageBox::Yes) {
         ui->tableWidget->clear();
         ui->tableWidget->setRowCount(0);
         QStringList name_table;
@@ -163,4 +167,49 @@ void History::on_clear_button_clicked()
         {
             add_to_log(Q_FUNC_INFO,"error in mkpath History");
         }
+        if (!QDir().mkpath(QDir::currentPath().append("/data/history/documents")))
+        {
+            add_to_log(Q_FUNC_INFO,"error in mkpath History");
+        }
+    }
+}
+
+void History::on_recover_button_clicked()
+{
+    int i = ui->tableWidget->currentRow();
+    if (i < 0)
+    {
+        return;
+    }
+
+    /*for (int j = 0; j < array_file_names[i].files_arr.size(); j++) {
+        qDebug() << array_file_names[i].files_arr[j] << " ";
+    }
+    qDebug() << "hello    ------ " << array_date_time[i].day;*/
+    emit add_date_time_sig(array_date_time[i], array_file_names[i].files_arr);
+    emit add_new_remind_sig(array_messages[i]);
+    for (int j = 0; j < array_file_names[i].files_arr.size(); j++)
+    {
+        //str_files.append(array_file_names[i].files_arr[j]).append("\n");
+        QString file_name_str = array_file_names[i].files_arr[j];
+        if (QFile::exists(QDir::currentPath().append("/data/documents/").append(file_name_str)))
+        {
+            QFile::remove(QDir::currentPath().append("/data/documents/").append(file_name_str));
+        }
+        bool ok = QFile::copy(QDir::currentPath().append("/data/history/documents/").append(file_name_str),
+                              QDir::currentPath().append("/data/documents/").append(file_name_str));
+        if (!ok)
+        {
+            //QMessageBox::information(this, "Ошибка", QString("Не удалось скопировать файл ").append(file_name_str));
+            //m_trayIcon->showMessage(QString("Не удалось скопировать файл ").append(file_name_str),"");
+            add_to_log(Q_FUNC_INFO,"Не удалось скопировать файл ");
+        }
+        //if (!QFile(QDir::currentPath().append("/data/history/documents/").append(array_file_names[i].files_arr[j])).remove())
+        //    add_to_log(Q_FUNC_INFO,"error in remove one document");
+
+    }
+
+    emit update_remembers_sig();
+    send_trey_not("Запись восстановлена!", "d");
+
 }

@@ -97,6 +97,7 @@ private slots:
     void add_trey_not(QString, QString);
     void on_clear_file_Button_clicked();
     void close_stat_win();
+    void update_remembers_slot();
 
 
 

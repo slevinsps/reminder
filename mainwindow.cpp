@@ -66,9 +66,14 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(stat_win, SIGNAL(add_new_remind_sig(QString)), this, SLOT(add_new_remind_slot(QString)));
     connect(rem_win, SIGNAL(add_date_time_sig(date_time&,std::vector <QString>&)), this, SLOT(add_date_time_slot(date_time&,std::vector <QString>&)));
     connect(rem_win, SIGNAL(add_new_remind_sig(QString)), this, SLOT(add_new_remind_slot(QString)));
+    connect(hist_win, SIGNAL(add_date_time_sig(date_time&,std::vector <QString>&)), this, SLOT(add_date_time_slot(date_time&,std::vector <QString>&)));
+    connect(hist_win, SIGNAL(add_new_remind_sig(QString)), this, SLOT(add_new_remind_slot(QString)));
+    connect(hist_win, SIGNAL(update_remembers_sig(void)), this, SLOT(update_remembers_slot(void)));
+
     connect(&date_time_obj, SIGNAL(sendData_withi(std::vector <date_time>*, std::vector <QString>*, std::vector <Files>*, int)), rem_win, SLOT(recieveData_withi(std::vector <date_time>*, std::vector <QString>*, std::vector <Files>*, int)));
     connect(&date_time_obj, SIGNAL(close_table()), this, SLOT(close_stat_win()));
     connect(rem_win, SIGNAL(send_trey_not(QString,QString)), this, SLOT(add_trey_not(QString,QString)));
+    connect(hist_win, SIGNAL(send_trey_not(QString,QString)), this, SLOT(add_trey_not(QString,QString)));
     connect(stat_win, SIGNAL(send_trey_not(QString,QString)), this, SLOT(add_trey_not(QString,QString)));
     connect(this, SIGNAL(send_trey_not(QString,QString)), this, SLOT(add_trey_not(QString,QString)));
     connect(this, SIGNAL(update_history()), hist_win, SLOT(update_history()));
@@ -171,6 +176,7 @@ int My_date_time::qstring_to_date_time(QString line, date_time &new_date_time, s
 
 int My_date_time::update_arrays()
 {
+    qDebug() << "hellodxdd";
     count = 0;
     array_date_time.clear();
     array_messages.clear();
@@ -230,62 +236,13 @@ int My_date_time::update_arrays()
 }
 
 
-void add_history(QString remind_text, date_time &nem_date_time, std::vector <QString>& filename)
+
+void MainWindow::update_remembers_slot()
 {
-    {
-        QString path_rem = QDir::currentPath().append("/data/history/reminders_h.txt");
-        //qDebug() << path_rem;
-        QFile file_rem(path_rem);
-        if (file_rem.open(QIODevice::Append | QIODevice::Text))
-        {
-            //qDebug() << "dfdf";
-            QTextStream outstream(&file_rem);
-            outstream << remind_text;
-            outstream << "\n@$@@$@@$@\n";
-            file_rem.close();
-        }
-        else
-        {
-            add_to_log(Q_FUNC_INFO,"error in add_history remind_text");
-            qDebug() << "error in open add_history remind_text";
-        }
-    }
-    QString path_date_time_rem = QDir::currentPath().append("/data/history/date_time_rem_h.txt");
-    QFile file_date_time_rem(path_date_time_rem);
-    if (file_date_time_rem.open(QIODevice::Append | QIODevice::Text))
-    {
-        QTextStream outstream(&file_date_time_rem);
-        outstream << nem_date_time.year << "#$#" << nem_date_time.month << "#$#" << nem_date_time.day << "#$#";
-        outstream << nem_date_time.hour << "#$#" << nem_date_time.minute;
-
-        QString file_name_str;
-
-        if (!filename.empty())
-        {
-            qDebug() << filename;
-            for (int i = 0; i < filename.size(); i++)
-            {
-                outstream << "#$#" << filename[i] ;
-            }
-            outstream << "\n";
-        }
-        else
-        {
-            file_name_str = "NULL";
-            filename.push_back(file_name_str);
-            outstream << "#$#" << file_name_str << "\n";
-        }
-
-
-        file_date_time_rem.close();
-    }
-    else
-    {
-        add_to_log(Q_FUNC_INFO,"error in add_history nem_date_time");
-        qDebug() << "error in open add_history nem_date_time";
-    }
-
+    date_time_obj.update_arrays();
 }
+
+
 
 void add_new_remind(QString remind_text)
 {
@@ -444,7 +401,7 @@ void MainWindow::on_createButton_clicked()
     }
     qDebug() << date_time_obj.file_path;
     add_date_time(nem_date_time, date_time_obj.file_path);
-    add_history(remind_text, nem_date_time, date_time_obj.file_path);
+    //add_history(remind_text, nem_date_time, date_time_obj.file_path);
     Files newfiles;
     newfiles.files_arr = date_time_obj.file_path;
     date_time_obj.array_file_names.push_back(newfiles);

@@ -106,18 +106,72 @@ void remind::on_waitButton_clicked()
     int i = num_i;
     QDateTime dt;
     dt = QDateTime::currentDateTime();
-
+    qDebug() << "gggggg " <<  dt.date().month();
+    int choosing_time  = ui->comboBox->currentIndex();
     (*array_date_time)[i].day = dt.date().day();
     (*array_date_time)[i].month = dt.date().month();
     (*array_date_time)[i].year = dt.date().year();
     (*array_date_time)[i].hour = dt.time().hour();
     (*array_date_time)[i].minute = dt.time().minute();
-    (*array_date_time)[i].minute += 1;
+    switch (choosing_time) {
+    case 0:
+        (*array_date_time)[i].minute += 30;
+        break;
+    case 1:
+        (*array_date_time)[i].hour++;
+        break;
+    case 2:
+        (*array_date_time)[i].day+=1;
+        break;
+    case 3:
+        (*array_date_time)[i].day+=7;
+        break;
+    default:
+        break;
+    }
+
     if ((*array_date_time)[i].minute >= 60)
     {
         (*array_date_time)[i].minute -= 60;
         (*array_date_time)[i].hour++;
     }
+    if ((*array_date_time)[i].hour >= 24)
+    {
+        (*array_date_time)[i].hour -= 24;
+        (*array_date_time)[i].day++;
+    }
+
+    if ((*array_date_time)[i].day >= 30 && ((*array_date_time)[i].month == 4 ||
+                                            (*array_date_time)[i].month == 6 ||
+                                            (*array_date_time)[i].month == 9 ||
+                                            (*array_date_time)[i].month == 11))
+    {
+        (*array_date_time)[i].day -= 30;
+        (*array_date_time)[i].month++;
+    }
+    if ((*array_date_time)[i].day >= 28 && ((*array_date_time)[i].month == 2))
+    {
+        (*array_date_time)[i].day -= 28;
+        (*array_date_time)[i].month++;
+    }
+    if ((*array_date_time)[i].day >= 31 && ((*array_date_time)[i].month == 1 ||
+                                            (*array_date_time)[i].month == 3 ||
+                                            (*array_date_time)[i].month == 5 ||
+                                            (*array_date_time)[i].month == 7 ||
+                                            (*array_date_time)[i].month == 8 ||
+                                            (*array_date_time)[i].month == 10 ||
+                                            (*array_date_time)[i].month == 12))
+    {
+        (*array_date_time)[i].day -= 31;
+        (*array_date_time)[i].month++;
+    }
+    if ((*array_date_time)[i].month > 12)
+    {
+        (*array_date_time)[i].month -= 12;
+        (*array_date_time)[i].year++;
+    }
+
+
 
     QFile(QDir::currentPath().append("/data/reminders.txt")).remove();
     QFile(QDir::currentPath().append("/data/date_time_rem.txt")).remove();
