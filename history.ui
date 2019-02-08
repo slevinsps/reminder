@@ -14,24 +14,6 @@
    <string>История</string>
   </property>
   <widget class="QWidget" name="centralwidget">
-   <widget class="QPushButton" name="clear_button">
-    <property name="geometry">
-     <rect>
-      <x>490</x>
-      <y>410</y>
-      <width>111</width>
-      <height>51</height>
-     </rect>
-    </property>
-    <property name="font">
-     <font>
-      <pointsize>12</pointsize>
-     </font>
-    </property>
-    <property name="text">
-     <string>Очистить</string>
-    </property>
-   </widget>
    <widget class="QTableWidget" name="tableWidget">
     <property name="geometry">
      <rect>
@@ -73,9 +55,9 @@
    <widget class="QPushButton" name="recover_button">
     <property name="geometry">
      <rect>
-      <x>350</x>
+      <x>10</x>
       <y>410</y>
-      <width>131</width>
+      <width>371</width>
       <height>51</height>
      </rect>
     </property>
@@ -86,6 +68,24 @@
     </property>
     <property name="text">
      <string>Восстановить</string>
+    </property>
+   </widget>
+   <widget class="QPushButton" name="delete_button">
+    <property name="geometry">
+     <rect>
+      <x>390</x>
+      <y>410</y>
+      <width>221</width>
+      <height>51</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <pointsize>12</pointsize>
+     </font>
+    </property>
+    <property name="text">
+     <string>Удалить безвозвратно</string>
     </property>
    </widget>
   </widget>

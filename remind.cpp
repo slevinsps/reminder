@@ -8,6 +8,7 @@
 #include <QMessageBox>
 #include <QDateTime>
 #include "logger.h"
+#include "history.h"
 
 remind::remind(QWidget *parent) :
     QMainWindow(parent),
@@ -63,6 +64,26 @@ void remind::on_deleteButton_clicked()
     {
         QFile(QDir::currentPath().append("/data/documents/").append((*array_file_names)[i].files_arr[j])).remove();
     }*/
+    add_history((*array_messages)[i], (*array_date_time)[i], (*array_file_names)[i].files_arr);
+    for (int j = 0; j < (*array_file_names)[i].files_arr.size(); j++)
+    {
+        //str_files.append(array_file_names[i].files_arr[j]).append("\n");
+        QString file_name_str = (*array_file_names)[i].files_arr[j];
+        if (QFile::exists(QDir::currentPath().append("/data/history/documents/").append(file_name_str)))
+        {
+            QFile::remove(QDir::currentPath().append("/data/history/documents/").append(file_name_str));
+        }
+        bool ok = QFile::copy(QDir::currentPath().append("/data/documents/").append(file_name_str),
+                              QDir::currentPath().append("/data/history/documents/").append(file_name_str));
+        if (!ok)
+        {
+            //QMessageBox::information(this, "Ошибка", QString("Не удалось скопировать файл ").append(file_name_str));
+            //m_trayIcon->showMessage(QString("Не удалось скопировать файл ").append(file_name_str),"");
+            emit send_trey_not(QString("Не удалось скопировать файл ").append(file_name_str),"");
+        }
+        if (!QFile(QDir::currentPath().append("/data/documents/").append((*array_file_names)[i].files_arr[j])).remove())
+            add_to_log(Q_FUNC_INFO,"error in remove one document");
+    }
     (*array_date_time).erase((*array_date_time).begin()+i);
     (*array_messages).erase((*array_messages).begin()+i);
     (*array_file_names).erase((*array_file_names).begin()+i);

@@ -119,6 +119,7 @@ private:
     table_date* stat_win;
     remind *rem_win;
     History *hist_win;
+    QString find_dir;
 };
 
 #endif // MAINWINDOW_H

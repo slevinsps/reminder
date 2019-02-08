@@ -9,7 +9,6 @@
 namespace Ui {
 class table_date;
 }
-
 class table_date : public QMainWindow
 {
     Q_OBJECT

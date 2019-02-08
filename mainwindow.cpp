@@ -52,7 +52,7 @@ MainWindow::MainWindow(QWidget *parent) :
     tmr->setInterval(2000);
 
     tmr_qm  = new QTimer();
-
+    find_dir = QDir::currentPath();
     connect(tmr, SIGNAL(timeout()), &date_time_obj, SLOT(remind_demon()));
     connect(tmr_qm, SIGNAL(timeout()), tmr_qm, SLOT(stop()));
     connect(tmr_qm, SIGNAL(timeout()), &qm, SLOT(close()));
@@ -422,9 +422,10 @@ void MainWindow::on_all_rem_Button_clicked()
 
 void MainWindow::on_add_file_Button_clicked()
 {
+
      QString str = QFileDialog::getOpenFileName(0,
                                 QString::fromUtf8("Загрузить файл"),
-                                QDir::currentPath(),
+                                find_dir,
                                 "All files (*.*)");
     if (!str.isEmpty())
     {
@@ -437,7 +438,13 @@ void MainWindow::on_add_file_Button_clicked()
         QStringList shortList = str.split('/');
         //this->date_time_obj.file_path.push_back(shortList[shortList.count()-1]);
         ui->label_file->setText(str_label.append("\n").append( shortList[shortList.count()-1]));
+
+        find_dir = "";
+        for(int i = 0; i < shortList.size() - 1; i++) {
+           find_dir +=  shortList[i]+"/";
+        }
     }
+    qDebug() << find_dir;
 }
 
 

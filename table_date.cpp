@@ -8,6 +8,7 @@
 #include <QUrl>
 
 #include "logger.h"
+#include "history.h"
 
 table_date::table_date(QWidget *parent) :
     QMainWindow(parent),
@@ -109,62 +110,7 @@ void table_date::closeEvent( QCloseEvent* event )
     }
 }
 
-void add_history(QString remind_text, date_time &nem_date_time, std::vector <QString>& filename)
-{
-    {
-        QString path_rem = QDir::currentPath().append("/data/history/reminders_h.txt");
-        //qDebug() << path_rem;
-        QFile file_rem(path_rem);
-        if (file_rem.open(QIODevice::Append | QIODevice::Text))
-        {
-            //qDebug() << "dfdf";
-            QTextStream outstream(&file_rem);
-            outstream << remind_text;
-            outstream << "\n@$@@$@@$@\n";
-            file_rem.close();
-        }
-        else
-        {
-            add_to_log(Q_FUNC_INFO,"error in add_history remind_text");
-            qDebug() << "error in open add_history remind_text";
-        }
-    }
-    QString path_date_time_rem = QDir::currentPath().append("/data/history/date_time_rem_h.txt");
-    QFile file_date_time_rem(path_date_time_rem);
-    if (file_date_time_rem.open(QIODevice::Append | QIODevice::Text))
-    {
-        QTextStream outstream(&file_date_time_rem);
-        outstream << nem_date_time.year << "#$#" << nem_date_time.month << "#$#" << nem_date_time.day << "#$#";
-        outstream << nem_date_time.hour << "#$#" << nem_date_time.minute;
 
-        QString file_name_str;
-
-        if (!filename.empty())
-        {
-            qDebug() << filename;
-            for (int i = 0; i < filename.size(); i++)
-            {
-                outstream << "#$#" << filename[i] ;
-            }
-            outstream << "\n";
-        }
-        else
-        {
-            file_name_str = "NULL";
-            filename.push_back(file_name_str);
-            outstream << "#$#" << file_name_str << "\n";
-        }
-
-
-        file_date_time_rem.close();
-    }
-    else
-    {
-        add_to_log(Q_FUNC_INFO,"error in add_history nem_date_time");
-        qDebug() << "error in open add_history nem_date_time";
-    }
-
-}
 
 void table_date::on_delete_button_clicked()
 {
@@ -222,14 +168,10 @@ void table_date::on_delete_button_clicked()
     }
 }
 
-void table_date::on_clear_button_clicked()
+void table_date::on_clear_button_clicked() // очистка из напоминаний
 {
-    if ((*array_date_time).empty())
+    /*if ((*array_date_time).empty())
     {
-        /*QMessageBox msgBox;
-        msgBox.setWindowTitle("Информация");
-        msgBox.setText("Список напоминаний пуст!");
-        msgBox.exec();*/
         emit send_trey_not("Список напоминаний пуст!","");
     }
     else
@@ -261,7 +203,7 @@ void table_date::on_clear_button_clicked()
             (*array_messages).clear();
             (*array_file_names).clear();
          }
-    }
+    }*/
 }
 
 void table_date::on_updateButton_clicked()
