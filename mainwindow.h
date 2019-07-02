@@ -16,7 +16,10 @@ class MainWindow;
 }
 
 
-
+int compareTwoDate(date_time first, date_time second);
+int checkDateArrayOnSort(std::vector <date_time> &array_date_time);
+int partitionQuickSortDateArray(std::vector <Files> &array_file_names, std::vector <date_time> &array_date_time, std::vector <QString> &array_messages,  int lo, int hi);
+int quickSortDateArray(std::vector <Files> &array_file_names, std::vector <date_time> &array_date_time, std::vector <QString> &array_messages,  int lo, int hi);
 
 
 class My_date_time : public QObject
@@ -94,7 +97,7 @@ private slots:
 
     void add_new_remind_slot(QString remind_text);
     void add_date_time_slot(date_time &nem_date_time, std::vector <QString>&);
-    void add_trey_not(QString, QString);
+    void showMessage(QString, QString);
     void on_clear_file_Button_clicked();
     void close_stat_win();
     void update_remembers_slot();
@@ -108,7 +111,7 @@ private slots:
 
 signals:
     void sendData(std::vector <date_time>*, std::vector <QString>*, std::vector <Files>*);
-    void send_trey_not(QString, QString);
+    void showMessageSignal(QString, QString);
     void update_history(void);
 
 private:

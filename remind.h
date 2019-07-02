@@ -37,7 +37,7 @@ signals:
     void add_date_time_sig(date_time&, std::vector <QString>&);
     void show_form();
     start_timer_demon(int);
-    void send_trey_not(QString, QString);
+    void showMessageSignal(QString, QString);
 
 private:
     Ui::remind *ui;

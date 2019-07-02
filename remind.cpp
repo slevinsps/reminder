@@ -47,28 +47,47 @@ void remind::recieveData_withi(std::vector<date_time>* one, std::vector<QString>
     }
     ui->textEdit->setText((*array_messages)[i]);
     ui->textEdit_2->setText(str_files);
-    QString data = QString::number((*array_date_time)[i].day).append(".").append(QString::number((*array_date_time)[i].month)).append(".").append(QString::number((*array_date_time)[i].year));
-    QString time = QString::number((*array_date_time)[i].hour).append(":").append(QString::number((*array_date_time)[i].minute));
+
+
+    QString dayRow = QString::number((*array_date_time)[i].day);
+    if ((*array_date_time)[i].day < 10) {
+        dayRow = "0" + dayRow;
+    }
+    QString monthRow = QString::number((*array_date_time)[i].month);
+    if ((*array_date_time)[i].month < 10) {
+        monthRow = "0" + monthRow;
+    }
+    QString hourRow = QString::number((*array_date_time)[i].hour);
+    if ((*array_date_time)[i].hour < 10) {
+        hourRow = "0" + hourRow;
+    }
+    QString minuteRow = QString::number((*array_date_time)[i].minute);
+    if ((*array_date_time)[i].minute < 10) {
+        minuteRow = "0" + minuteRow;
+    }
+
+
+    QString data = (dayRow.append(".").append(monthRow).append(".").append(QString::number((*array_date_time)[i].year)));
+    QString time = (hourRow.append(":").append(minuteRow));
     ui->label_data->setText(QString("Дата: ").append(data).append("  Время: ").append(time));
     tmr->start();
     this->activateWindow();
     this->showNormal();
-    //qDebug() << "балабол";
 }
 
 
 void remind::on_deleteButton_clicked()
 {
     int i = num_i;
-    /*for (int j = 0; j < (*array_file_names)[i].files_arr.size(); j++)
-    {
-        QFile(QDir::currentPath().append("/data/documents/").append((*array_file_names)[i].files_arr[j])).remove();
-    }*/
+
     add_history((*array_messages)[i], (*array_date_time)[i], (*array_file_names)[i].files_arr);
     for (int j = 0; j < (*array_file_names)[i].files_arr.size(); j++)
     {
         //str_files.append(array_file_names[i].files_arr[j]).append("\n");
         QString file_name_str = (*array_file_names)[i].files_arr[j];
+        if (file_name_str == "NULL") { // if file don`t attached
+            continue;
+        }
         if (QFile::exists(QDir::currentPath().append("/data/history/documents/").append(file_name_str)))
         {
             QFile::remove(QDir::currentPath().append("/data/history/documents/").append(file_name_str));
@@ -79,7 +98,7 @@ void remind::on_deleteButton_clicked()
         {
             //QMessageBox::information(this, "Ошибка", QString("Не удалось скопировать файл ").append(file_name_str));
             //m_trayIcon->showMessage(QString("Не удалось скопировать файл ").append(file_name_str),"");
-            emit send_trey_not(QString("Не удалось скопировать файл ").append(file_name_str),"");
+            emit showMessageSignal(QString("Не удалось скопировать файл ").append(file_name_str),"");
         }
         if (!QFile(QDir::currentPath().append("/data/documents/").append((*array_file_names)[i].files_arr[j])).remove())
             add_to_log(Q_FUNC_INFO,"error in remove one document");
@@ -113,11 +132,10 @@ void remind::on_openButton_clicked()
         if (!QDesktopServices::openUrl(QUrl::fromLocalFile(str)))
         {
             //QMessageBox::information(this, "Ошибка", QString("Невозможно открыть файл ").append((*array_file_names)[i].files_arr[j]));
-            emit send_trey_not(QString("Невозможно открыть файл ").append((*array_file_names)[i].files_arr[j]),"");
+            emit showMessageSignal(QString("Невозможно открыть файл ").append((*array_file_names)[i].files_arr[j]),"");
             //add_to_log(Q_FUNC_INFO,QString("error in openUrl ").append((*array_file_names)[i].files_arr[j]));
         }
     }
-    //qDebug() << "мазафака";
     tmr->stop();
     emit start_timer_demon(2000);
 }
@@ -127,7 +145,6 @@ void remind::on_waitButton_clicked()
     int i = num_i;
     QDateTime dt;
     dt = QDateTime::currentDateTime();
-    qDebug() << "gggggg " <<  dt.date().month();
     int choosing_time  = ui->comboBox->currentIndex();
     (*array_date_time)[i].day = dt.date().day();
     (*array_date_time)[i].month = dt.date().month();
@@ -192,8 +209,6 @@ void remind::on_waitButton_clicked()
         (*array_date_time)[i].year++;
     }
 
-
-
     QFile(QDir::currentPath().append("/data/reminders.txt")).remove();
     QFile(QDir::currentPath().append("/data/date_time_rem.txt")).remove();
     for(int i = 0; i < (*array_date_time).size(); i++)
@@ -217,7 +232,6 @@ void remind::closeEvent( QCloseEvent* event )
 
 void remind::show_close()
 {
-    //qDebug() << "Привет";
     //tmr->stop();
     //emit start_timer_demon(2000);
     this->activateWindow();

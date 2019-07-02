@@ -4,6 +4,8 @@
 #include <QTextStream>
 #include "history.h"
 #include <QMessageBox>
+#include <QKeyEvent>
+#include "mainwindow.h"
 History::History(QWidget *parent) :
     QMainWindow(parent),
     ui(new Ui::History)
@@ -11,6 +13,9 @@ History::History(QWidget *parent) :
     ui->setupUi(this);
     ui->tableWidget->setSelectionBehavior(QAbstractItemView::SelectRows);
     ui->tableWidget->setEditTriggers(QAbstractItemView::NoEditTriggers);
+    key = new keyEnterReceiverHistory();
+    ui->findEdit->installEventFilter(key);
+    connect(key, SIGNAL(findPressSignal()), this, SLOT(on_find_button_clicked()));
 }
 
 History::~History()
@@ -18,6 +23,20 @@ History::~History()
     delete ui;
 }
 
+bool keyEnterReceiverHistory::eventFilter(QObject* obj, QEvent* event) {
+    if (event->type()==QEvent::KeyPress) {
+        QKeyEvent* key = static_cast<QKeyEvent*>(event);
+        if (key->key()==Qt::Key_Enter || key->key()==Qt::Key_Return)  {
+           emit findPressSignal();
+        } else {
+            return QObject::eventFilter(obj, event);
+        }
+        return true;
+    } else {
+        return QObject::eventFilter(obj, event);
+    }
+    return false;
+}
 
 int qstring_to_date_time(QString line, date_time &new_date_time, std::vector <QString>& filename)
 {
@@ -38,6 +57,70 @@ int qstring_to_date_time(QString line, date_time &new_date_time, std::vector <QS
     for(int i = 5; i < shortList.count();i++)
         filename.push_back(shortList[i]);
     return 0;
+}
+
+
+void History::insertRow(std::vector<date_time>* array_date_time, std::vector<QString>* array_messages, std::vector <Files>* array_file_names, int i) {
+    QTableWidgetItem *item1, *item2, *item3, *item4, *item5;
+    QString dayRow = QString::number((*array_date_time)[i].day);
+    if ((*array_date_time)[i].day < 10) {
+        dayRow = "0" + dayRow;
+    }
+    QString monthRow = QString::number((*array_date_time)[i].month);
+    if ((*array_date_time)[i].month < 10) {
+        monthRow = "0" + monthRow;
+    }
+    QString hourRow = QString::number((*array_date_time)[i].hour);
+    if ((*array_date_time)[i].hour < 10) {
+        hourRow = "0" + hourRow;
+    }
+    QString minuteRow = QString::number((*array_date_time)[i].minute);
+    if ((*array_date_time)[i].minute < 10) {
+        minuteRow = "0" + minuteRow;
+    }
+
+
+
+    item1 = new QTableWidgetItem(dayRow.append(".").append(monthRow).append(".").append(QString::number((*array_date_time)[i].year)));
+    item2 = new QTableWidgetItem(hourRow.append(":").append(minuteRow));
+    item3 = new QTableWidgetItem((*array_messages)[i]);
+    QString str = "";
+    for (int j = 0; j < (*array_file_names)[i].files_arr.size(); j++)
+    {
+        str.append((*array_file_names)[i].files_arr[j]).append("\n");
+    }
+    item4 = new QTableWidgetItem(str);
+    item5 = new QTableWidgetItem(QString::number(i));
+
+    ui->tableWidget->insertRow ( ui->tableWidget->rowCount() );
+    ui->tableWidget->setItem   ( ui->tableWidget->rowCount()-1, 0, item1);
+    ui->tableWidget->setItem   ( ui->tableWidget->rowCount()-1, 1, item2);
+    ui->tableWidget->setItem   ( ui->tableWidget->rowCount()-1, 2, item3);
+    ui->tableWidget->setItem   ( ui->tableWidget->rowCount()-1, 3, item4);
+    ui->tableWidget->setItem   ( ui->tableWidget->rowCount()-1, 4, item5);
+    ui->tableWidget->setColumnWidth(0, 80);
+    ui->tableWidget->setColumnWidth(1, 50);
+    ui->tableWidget->horizontalHeader()->setSectionResizeMode(2, QHeaderView::Stretch);
+    ui->tableWidget->setColumnWidth(3, 130);
+    ui->tableWidget->setColumnHidden(4, true);
+}
+
+void History::showAllHistory() {
+    ui->findEdit->setText("");
+    ui->tableWidget->clear();
+    ui->tableWidget->setRowCount(0);
+    QStringList name_table;
+    name_table << "Дата" << "Время" << "Напоминание" << "Файл";
+    ui->tableWidget->setHorizontalHeaderLabels(name_table);
+
+    if (checkDateArrayOnSort(array_date_time) == -1) {
+        quickSortDateArray(array_file_names, array_date_time, array_messages, 0, array_date_time.size() - 1);
+    }
+    for (int i = 0; i < array_date_time.size(); i++)
+    {
+        insertRow(&array_date_time, &array_messages, &array_file_names, i);
+    }
+    ui->tableWidget->selectRow(0);
 }
 
 void History::update_history()
@@ -101,46 +184,10 @@ void History::update_history()
         }
     }
     /******/
-    ui->tableWidget->clear();
-    ui->tableWidget->setRowCount(0);
-    QStringList name_table;
-    name_table << "Дата" << "Время" << "Напоминание" << "Файл";
-    ui->tableWidget->setHorizontalHeaderLabels(name_table);
-    /*for (int i = 0; i < (*array_date_time).size();i++)
-    {
-        qDebug() << (*array_date_time)[i].day << " " << (*array_date_time)[i].month << " " << (*array_date_time)[i].year << " "
-                 << (*array_date_time)[i].minute << " " << (*array_date_time)[i].hour << " ";
-    }
-    qDebug() << "\n";
-    for (int i = 0; i < (*array_messages).size();i++)
-    {
-        qDebug() << i << " " << (*array_messages)[i] << " " << (*array_messages).size();
-    }*/
-    for (int i = 0; i < array_date_time.size(); i++)
-    {
-        QTableWidgetItem *item1, *item2, *item3, *item4;
-        item1 = new QTableWidgetItem(QString::number(array_date_time[i].day).append(".").append(QString::number(array_date_time[i].month)).append(".").append(QString::number(array_date_time[i].year)));
-        item2 = new QTableWidgetItem(QString::number(array_date_time[i].hour).append(":").append(QString::number(array_date_time[i].minute)));
-        item3 = new QTableWidgetItem(array_messages[i]);
-        QString str = "";
-        for (int j = 0; j < array_file_names[i].files_arr.size(); j++)
-        {
-            str.append(array_file_names[i].files_arr[j]).append("\n");
-        }
-        item4 = new QTableWidgetItem(str);
-
-        ui->tableWidget->insertRow ( ui->tableWidget->rowCount() );
-        ui->tableWidget->setItem   ( ui->tableWidget->rowCount()-1, 0, item1);
-        ui->tableWidget->setItem   ( ui->tableWidget->rowCount()-1, 1, item2);
-        ui->tableWidget->setItem   ( ui->tableWidget->rowCount()-1, 2, item3);
-        ui->tableWidget->setItem   ( ui->tableWidget->rowCount()-1, 3, item4);
-        ui->tableWidget->setColumnWidth(0, 80);
-        ui->tableWidget->setColumnWidth(1, 50);
-        ui->tableWidget->horizontalHeader()->setSectionResizeMode(2, QHeaderView::Stretch);
-        ui->tableWidget->setColumnWidth(3, 140);
-    }
-
+    showAllHistory();
 }
+
+
 
 void History::on_clear_button_clicked()
 {
@@ -176,7 +223,15 @@ void History::on_clear_button_clicked()
 
 void History::on_recover_button_clicked()
 {
-    int i = ui->tableWidget->currentRow();
+    int i = -1;
+    int currRow = ui->tableWidget->currentRow();
+    QTableWidgetItem *item = ui->tableWidget->item(currRow,4);
+    if (NULL != item) {
+        i = item->text().toInt();
+    } else {
+        return;
+    }
+
     if (i < 0)
     {
         return;
@@ -192,6 +247,9 @@ void History::on_recover_button_clicked()
     {
         //str_files.append(array_file_names[i].files_arr[j]).append("\n");
         QString file_name_str = array_file_names[i].files_arr[j];
+        if (file_name_str == "NULL") { // if file don`t attached
+            continue;
+        }
         if (QFile::exists(QDir::currentPath().append("/data/documents/").append(file_name_str)))
         {
             QFile::remove(QDir::currentPath().append("/data/documents/").append(file_name_str));
@@ -210,7 +268,7 @@ void History::on_recover_button_clicked()
     }
 
     emit update_remembers_sig();
-    send_trey_not("Запись восстановлена!", "d");
+    showMessageSignal("Запись восстановлена!", "d");
 
 }
 
@@ -274,11 +332,21 @@ void add_history(QString remind_text, date_time &nem_date_time, std::vector <QSt
 
 void History::on_delete_button_clicked()
 {
-    int i = ui->tableWidget->currentRow();
+
+    int i = -1;
+    int currRow = ui->tableWidget->currentRow();
+    QTableWidgetItem *item = ui->tableWidget->item(currRow,4);
+    if (NULL != item) {
+        i = item->text().toInt();
+    } else {
+        return;
+    }
+
     if (i < 0)
     {
         return;
     }
+
     qm.setText("Вы уверены что хотите удалить напоминание из истории?");
     qm.setIcon(QMessageBox::Information);
     qm.setStandardButtons(QMessageBox::Yes | QMessageBox::No);
@@ -287,7 +355,7 @@ void History::on_delete_button_clicked()
     qm.button(QMessageBox::No)->animateClick(1500);
     int button = qm.exec();
     if (button == QMessageBox::Yes) {
-    ui->tableWidget->removeRow(i);
+    ui->tableWidget->removeRow(currRow);
     for (int j = 0; j < array_file_names[i].files_arr.size(); j++)
     {
         if (!QFile(QDir::currentPath().append("/data/history/documents/").append(array_file_names[i].files_arr[j])).remove())
@@ -298,12 +366,16 @@ void History::on_delete_button_clicked()
     array_file_names.erase(array_file_names.begin()+i);
     }
 
+    writeOnDisk();
+
 
 
 }
 
 
-void History::closeEvent( QCloseEvent* event )
+
+
+void History::writeOnDisk(void)
 {
     if (!QFile(QDir::currentPath().append("/data/history/reminders_h.txt")).remove())
         add_to_log(Q_FUNC_INFO,"error in remove reminders_h.txt");
@@ -314,4 +386,58 @@ void History::closeEvent( QCloseEvent* event )
     {
         add_history(array_messages[i], array_date_time[i], array_file_names[i].files_arr);
     }
+}
+
+void History::on_find_button_clicked()
+{
+    QString find_text = ui->findEdit->text();
+    if (find_text.isEmpty()) {
+        this->showAllHistory();
+        return;
+    }
+    ui->tableWidget->clear();
+    ui->tableWidget->setRowCount(0);
+    QStringList name_table;
+    name_table << "Дата" << "Время" << "Напоминание" << "Файл";
+    ui->tableWidget->setHorizontalHeaderLabels(name_table);
+
+    for (int i = 0; i < array_date_time.size(); i++)
+    {
+        QString dayRow = QString::number(array_date_time[i].day);
+        if (array_date_time[i].day < 10) {
+            dayRow = "0" + dayRow;
+        }
+        QString monthRow = QString::number(array_date_time[i].month);
+        if (array_date_time[i].month < 10) {
+            monthRow = "0" + monthRow;
+        }
+
+        QString date = dayRow.append(".").append(monthRow).append(".").append(QString::number(array_date_time[i].year));
+
+        if (array_messages[i].indexOf(find_text,0,Qt::CaseInsensitive) < 0) {
+            if (date.indexOf(find_text, 0, Qt::CaseInsensitive) < 0) {
+                bool findFlag = false;
+                for (int j = 0; j < array_file_names[i].files_arr.size(); j++)
+                {
+                    if (array_file_names[i].files_arr[j].indexOf(find_text,0,Qt::CaseInsensitive) > 0) {
+                        findFlag = true;
+                        break;
+                    }
+                }
+                if (!findFlag) {
+                    continue;
+                }
+            }
+        }
+
+        insertRow(&array_date_time, &array_messages, &array_file_names, i);
+
+    }
+    ui->tableWidget->selectRow(0);
+}
+
+void History::on_showAll_button_clicked()
+{
+    ui->findEdit->setText("");
+    this->showAllHistory();
 }

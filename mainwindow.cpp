@@ -72,10 +72,10 @@ MainWindow::MainWindow(QWidget *parent) :
 
     connect(&date_time_obj, SIGNAL(sendData_withi(std::vector <date_time>*, std::vector <QString>*, std::vector <Files>*, int)), rem_win, SLOT(recieveData_withi(std::vector <date_time>*, std::vector <QString>*, std::vector <Files>*, int)));
     connect(&date_time_obj, SIGNAL(close_table()), this, SLOT(close_stat_win()));
-    connect(rem_win, SIGNAL(send_trey_not(QString,QString)), this, SLOT(add_trey_not(QString,QString)));
-    connect(hist_win, SIGNAL(send_trey_not(QString,QString)), this, SLOT(add_trey_not(QString,QString)));
-    connect(stat_win, SIGNAL(send_trey_not(QString,QString)), this, SLOT(add_trey_not(QString,QString)));
-    connect(this, SIGNAL(send_trey_not(QString,QString)), this, SLOT(add_trey_not(QString,QString)));
+    connect(rem_win, SIGNAL(showMessageSignal(QString,QString)), this, SLOT(showMessage(QString,QString)));
+    connect(hist_win, SIGNAL(showMessageSignal(QString,QString)), this, SLOT(showMessage(QString,QString)));
+    connect(stat_win, SIGNAL(showMessageSignal(QString,QString)), this, SLOT(showMessage(QString,QString)));
+    connect(this, SIGNAL(showMessageSignal(QString,QString)), this, SLOT(showMessage(QString,QString)));
     connect(this, SIGNAL(update_history()), hist_win, SLOT(update_history()));
     tmr->start();
 
@@ -97,7 +97,7 @@ MainWindow::~MainWindow()
     delete ui;
 }
 
-void MainWindow::add_trey_not(QString one, QString two)
+void MainWindow::showMessage(QString one, QString two)
 {
     //tmr_qm->start(3000);
     //MessageBox my_qm;
@@ -174,22 +174,114 @@ int My_date_time::qstring_to_date_time(QString line, date_time &new_date_time, s
     return 0;
 }
 
+
+int compareTwoDate(date_time first, date_time second){ // -1 if first < second; 1 if first > second; 0 if equal;
+    if (first.year < second.year) {
+        return -1;
+    } else if (first.year > second.year) {
+        return 1;
+    } else {
+        if (first.month < second.month) {
+            return -1;
+        } else if (first.month > second.month) {
+            return 1;
+        } else {
+            if (first.day < second.day) {
+                return -1;
+            } else if (first.day > second.day) {
+                return 1;
+            } else {
+                if (first.hour < second.hour) {
+                    return -1;
+                } else if (first.hour > second.hour) {
+                    return 1;
+                } else {
+                    if (first.minute < second.minute) {
+                        return -1;
+                    } else if (first.minute > second.minute) {
+                        return 1;
+                    }
+                }
+            }
+        }
+    }
+    return 0;
+}
+
+int checkDateArrayOnSort(std::vector <date_time> &array_date_time) {
+
+    for (int i = 0; i < (int)array_date_time.size() - 1; i++) {
+        if (compareTwoDate(array_date_time[i],array_date_time[i + 1]) > 0) {
+            return -1;
+        }
+    }
+    return 0;
+}
+
+int partitionQuickSortDateArray(std::vector <Files> &array_file_names, std::vector <date_time> &array_date_time, std::vector <QString> &array_messages, int lo, int hi) {
+    qDebug() << array_date_time[hi].day;
+    date_time pivot = array_date_time[hi];
+
+    int i = lo;
+    for (int j = lo; j <= hi - 1; j++) {
+        if (compareTwoDate(array_date_time[j], pivot) < 0) {
+
+            date_time tmpDate = array_date_time[i];
+            array_date_time[i] = array_date_time[j];
+            array_date_time[j] = tmpDate;
+
+            QString tmpStr = array_messages[i];
+            array_messages[i] = array_messages[j];
+            array_messages[j] = tmpStr;
+
+            Files tmpFile = array_file_names[i];
+            array_file_names[i] = array_file_names[j];
+            array_file_names[j] = tmpFile;
+
+            i = i + 1;
+        }
+    }
+    date_time tmpDate = array_date_time[i];
+    array_date_time[i] = array_date_time[hi];
+    array_date_time[hi] = tmpDate;
+
+    QString tmpStr = array_messages[i];
+    array_messages[i] = array_messages[hi];
+    array_messages[hi] = tmpStr;
+
+    Files tmpFile = array_file_names[i];
+    array_file_names[i] = array_file_names[hi];
+    array_file_names[hi] = tmpFile;
+    return i;
+}
+
+int quickSortDateArray(std::vector <Files> &array_file_names, std::vector <date_time> &array_date_time, std::vector <QString> &array_messages, int lo, int hi) {
+    if (lo < hi) {
+        qDebug() << "AAAAAAAA";
+        int p = partitionQuickSortDateArray(array_file_names, array_date_time, array_messages, lo, hi);
+        quickSortDateArray(array_file_names, array_date_time, array_messages, lo, p - 1);
+        quickSortDateArray(array_file_names, array_date_time, array_messages, p + 1, hi);
+    }
+}
+
+
+// read information (messages, dates, filenames) and write into arrays
 int My_date_time::update_arrays()
 {
-    qDebug() << "hellodxdd";
     count = 0;
     array_date_time.clear();
     array_messages.clear();
     array_file_names.clear();
 
     QString path_date_time_rem = QDir::currentPath().append("/data/date_time_rem.txt");
-    if (!QFile(path_date_time_rem).exists())
-    {
-        //qDebug() << "error in file_date_time_rem update_arrayswdsdsdsdsd";
-        return 0;
-    }
     QFile file_date_time_rem(path_date_time_rem);
-    if (file_date_time_rem.open(QIODevice::ReadOnly | QIODevice::Text))
+    /*if (!QFile(path_date_time_rem).exists())
+    {
+        file.open(QIODevice::ReadWrite)
+        return 0;
+    }*/
+
+    if (file_date_time_rem.open(QIODevice::ReadWrite | QIODevice::Text))
     {
         QString line;
         date_time new_date_time;
@@ -216,7 +308,7 @@ int My_date_time::update_arrays()
 
     QString path_new_rem = QDir::currentPath().append("/data/reminders.txt");
     QFile file_new_rem(path_new_rem);
-    if (file_new_rem.open(QIODevice::ReadOnly | QIODevice::Text))
+    if (file_new_rem.open(QIODevice::ReadWrite | QIODevice::Text))
     {
         QTextStream in(&file_new_rem);
         QString line = in.readAll();
@@ -232,6 +324,10 @@ int My_date_time::update_arrays()
         qDebug() << "error in file_new_rem update_arrays";
         return -2;
     }
+//    for (int i = 0; i < array_date_time.size(); i++) {
+//        qDebug() << array_date_time[i];
+//    }
+
     return 0;
 }
 
@@ -322,12 +418,7 @@ void My_date_time::remind_demon(void)
 {
     QDateTime dt;
     dt = QDateTime::currentDateTime();
-    /*qDebug() << dt.date().day();
-    qDebug() << dt.date().month();
-    qDebug() << dt.date().year();
-    qDebug() << dt.time().hour();
-    qDebug() << dt.time().minute();
-    qDebug() << dt.time().second();*/
+
     for(int i = 0; i < this->array_date_time.size(); i++)
     {
         if     (this->array_date_time[i].year < dt.date().year() ||
@@ -367,10 +458,12 @@ void MainWindow::on_createButton_clicked()
     QTime choose_time = ui->timeEdit->time();
     date_time nem_date_time = create_date_time_object(choose_date, choose_time);
     QString remind_text = ui->plainTextEdit->toPlainText();
+    if (remind_text.isEmpty()) {
+        this->showMessage("Введите текст напоминания!", "");
+        return;
+    }
     //qDebug() << remind_text;
 
-    add_new_remind(remind_text);
-    date_time_obj.array_messages.push_back(remind_text);
     if (!date_time_obj.file_path.empty())
     {
         //qDebug() << filename;
@@ -378,6 +471,9 @@ void MainWindow::on_createButton_clicked()
         {
             QStringList shortList = date_time_obj.file_path[i].split('/');
             QString file_name_str = shortList[shortList.count()-1];
+            if (file_name_str == "NULL") { // if file don`t attached
+                continue;
+            }
             if (QFile::exists(QDir::currentPath().append("/data/documents/").append(file_name_str)))
             {
                 QFile::remove(QDir::currentPath().append("/data/documents/").append(file_name_str));
@@ -387,7 +483,7 @@ void MainWindow::on_createButton_clicked()
             {
                 //QMessageBox::information(this, "Ошибка", QString("Не удалось скопировать файл ").append(file_name_str));
                 //m_trayIcon->showMessage(QString("Не удалось скопировать файл ").append(file_name_str),"");
-                emit send_trey_not(QString("Не удалось скопировать файл ").append(file_name_str),"");
+                emit showMessageSignal(QString("Не удалось скопировать файл ").append(file_name_str),"");
                 date_time_obj.file_path.erase(date_time_obj.file_path.begin()+i);
                 i--;
             }
@@ -401,15 +497,35 @@ void MainWindow::on_createButton_clicked()
     }
     qDebug() << date_time_obj.file_path;
     add_date_time(nem_date_time, date_time_obj.file_path);
+    add_new_remind(remind_text);
     //add_history(remind_text, nem_date_time, date_time_obj.file_path);
     Files newfiles;
     newfiles.files_arr = date_time_obj.file_path;
+
+    /*std::vector<date_time>::iterator itArray_date_time = date_time_obj.array_date_time.begin();
+    std::vector<QString>::iterator itArray_messages = date_time_obj.array_messages.begin();
+    std::vector<Files>::iterator itArray_file_names = date_time_obj.array_file_names.begin();
+    for (itArray_date_time = date_time_obj.array_date_time.begin() ;
+         itArray_date_time != date_time_obj.array_date_time.end() && date_time_obj.compareTwoDate(*itArray_date_time, nem_date_time) < 0; ++itArray_date_time) {
+        qDebug() << (*itArray_date_time).day;
+        ++itArray_messages;
+        ++itArray_file_names;
+    }
+
+    date_time_obj.array_file_names.insert(itArray_file_names, newfiles);
+    date_time_obj.array_messages.insert(itArray_messages, remind_text);
+    date_time_obj.array_date_time.insert(itArray_date_time, nem_date_time);*/
+
     date_time_obj.array_file_names.push_back(newfiles);
+    date_time_obj.array_messages.push_back(remind_text);
     date_time_obj.array_date_time.push_back(nem_date_time);
+
+
+
     this->date_time_obj.file_path.clear();
     ui->label_file->setText("Файл не выбран");
     ui->plainTextEdit->clear();
-    emit send_trey_not(QString("Напоминание добавлено!"),"");
+    emit showMessageSignal(QString("Напоминание добавлено!"),"");
     //m_trayIcon->showMessage("Напоминание добавлено!","j");
 }
 

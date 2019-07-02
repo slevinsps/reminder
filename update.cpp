@@ -19,13 +19,14 @@ Update::~Update()
 }
 
 
-void Update::recieveData(date_time *date, QString *comment, Files *files, int num_row)
+void Update::recieveData(date_time *date, QString *comment, Files *files, int curRow, int rowInArray)
 {
     clear = false;
     date1 = date;
     comment1 = comment;
     files1 = files;
-    num_row1 = num_row;
+    curRow1 = curRow;
+    rowInArray1 = rowInArray;
     QTime time(date->hour,date->minute);
     ui->timeEdit->setTime(time);
     QDate cur_date(date->year,date->month, date->day);
@@ -104,6 +105,9 @@ void Update::on_createButton_clicked()
         QStringList shortList = files_path[i].split('/');
         QString file_name_str = shortList[shortList.count()-1];
         qDebug() << files_path[i];
+        if (file_name_str == "NULL") { // if file don`t attached
+            continue;
+        }
         if (QFile::exists(QDir::currentPath().append("/data/documents/").append(file_name_str)))
         {
             QFile::remove(QDir::currentPath().append("/data/documents/").append(file_name_str));
@@ -136,6 +140,6 @@ void Update::on_createButton_clicked()
     if (files1->files_arr.empty())
         files1->files_arr.push_back("NULL");
     files_path.clear();
-    emit update_table_sig(num_row1);
+    emit update_table_sig(curRow1, rowInArray1);
     this->close();
 }

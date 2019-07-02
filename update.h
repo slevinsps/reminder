@@ -17,7 +17,7 @@ public:
     explicit Update(QWidget *parent = 0);
     ~Update();
 public slots:
-    void recieveData(date_time*, QString*, Files*, int);
+    void recieveData(date_time*, QString*, Files*, int, int);
 
 
 private slots:
@@ -33,11 +33,12 @@ private:
     QString *comment1;
     Files *files1;
     bool clear;
-    int num_row1;
+    int curRow1;
+    int rowInArray1;
     Ui::Update *ui;
 
 signals:
-    void update_table_sig(int);
+    void update_table_sig(int, int);
 };
 
 #endif // UPDATE_H
