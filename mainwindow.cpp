@@ -219,7 +219,6 @@ int checkDateArrayOnSort(std::vector <date_time> &array_date_time) {
 }
 
 int partitionQuickSortDateArray(std::vector <Files> &array_file_names, std::vector <date_time> &array_date_time, std::vector <QString> &array_messages, int lo, int hi) {
-    qDebug() << array_date_time[hi].day;
     date_time pivot = array_date_time[hi];
 
     int i = lo;
@@ -257,7 +256,6 @@ int partitionQuickSortDateArray(std::vector <Files> &array_file_names, std::vect
 
 int quickSortDateArray(std::vector <Files> &array_file_names, std::vector <date_time> &array_date_time, std::vector <QString> &array_messages, int lo, int hi) {
     if (lo < hi) {
-        qDebug() << "AAAAAAAA";
         int p = partitionQuickSortDateArray(array_file_names, array_date_time, array_messages, lo, hi);
         quickSortDateArray(array_file_names, array_date_time, array_messages, lo, p - 1);
         quickSortDateArray(array_file_names, array_date_time, array_messages, p + 1, hi);

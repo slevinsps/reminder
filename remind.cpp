@@ -79,7 +79,12 @@ void remind::recieveData_withi(std::vector<date_time>* one, std::vector<QString>
 void remind::on_deleteButton_clicked()
 {
     int i = num_i;
-
+    if (!QDir(QDir::currentPath().append("/data/history/documents")).exists()) {
+        QDir().mkdir(QDir::currentPath().append("/data/history/documents"));
+    }
+    if (!QDir(QDir::currentPath().append("/data/documents")).exists()) {
+        QDir().mkdir(QDir::currentPath().append("/data/documents"));
+    }
     add_history((*array_messages)[i], (*array_date_time)[i], (*array_file_names)[i].files_arr);
     for (int j = 0; j < (*array_file_names)[i].files_arr.size(); j++)
     {

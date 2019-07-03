@@ -139,7 +139,7 @@ void History::update_history()
             return;
         }
         QFile file_date_time_rem(path_date_time_rem);
-        if (file_date_time_rem.open(QIODevice::ReadOnly | QIODevice::Text))
+        if (file_date_time_rem.open(QIODevice::ReadWrite | QIODevice::Text))
         {
             QString line;
             date_time new_date_time;
@@ -166,7 +166,7 @@ void History::update_history()
 
         QString path_new_rem = QDir::currentPath().append("/data/history/reminders_h.txt");
         QFile file_new_rem(path_new_rem);
-        if (file_new_rem.open(QIODevice::ReadOnly | QIODevice::Text))
+        if (file_new_rem.open(QIODevice::ReadWrite | QIODevice::Text))
         {
             QTextStream in(&file_new_rem);
             QString line = in.readAll();
@@ -243,6 +243,12 @@ void History::on_recover_button_clicked()
     qDebug() << "hello    ------ " << array_date_time[i].day;*/
     emit add_date_time_sig(array_date_time[i], array_file_names[i].files_arr);
     emit add_new_remind_sig(array_messages[i]);
+    if (!QDir(QDir::currentPath().append("/data/history/documents")).exists()) {
+        QDir().mkdir(QDir::currentPath().append("/data/history/documents"));
+    }
+    if (!QDir(QDir::currentPath().append("/data/documents")).exists()) {
+        QDir().mkdir(QDir::currentPath().append("/data/documents"));
+    }
     for (int j = 0; j < array_file_names[i].files_arr.size(); j++)
     {
         //str_files.append(array_file_names[i].files_arr[j]).append("\n");

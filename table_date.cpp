@@ -186,7 +186,6 @@ void table_date::writeOnDisk(void)
 void table_date::on_delete_button_clicked()
 {
 
-
     if ((*array_date_time).empty())
     {
         /*QMessageBox msgBox;
@@ -197,6 +196,12 @@ void table_date::on_delete_button_clicked()
     }
     else
     {
+        if (!QDir(QDir::currentPath().append("/data/history/documents")).exists()) {
+            QDir().mkdir(QDir::currentPath().append("/data/history/documents"));
+        }
+        if (!QDir(QDir::currentPath().append("/data/documents")).exists()) {
+            QDir().mkdir(QDir::currentPath().append("/data/documents"));
+        }
         qm.setText("Вы уверены что хотите удалить напоминание?");
         qm.setIcon(QMessageBox::Information);
         qm.setStandardButtons(QMessageBox::Yes | QMessageBox::No);
